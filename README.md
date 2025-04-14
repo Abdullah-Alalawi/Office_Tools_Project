@@ -18,5 +18,5 @@
 # 13- Implementing GitHub Advanced Security for scanning code security vulnerabilities
 # 14- Live Demo of the Application
 
-All Done by His Majesty Abdullah Alalawi
+# All Done by His Majesty Abdullah Alalawi
 
