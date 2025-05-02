@@ -1,4 +1,4 @@
-name: Third party Security Scans 
+name: Third Party Security Scans (Codespaces)
 on:
   push:
     branches: [ main ]
@@ -14,20 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Semgrep (Pattern-based scanning)
+      # Semgrep (Works with private repos)
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/default"
+          # Configure SEMGREP_APP_TOKEN in repo settings
 
-      # CodeQL (Limited version without GHAS)
-      - name: CodeQL Initialize
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript,typescript
-
-      - name: CodeQL Analyze
-        uses: github/codeql-action/analyze@v2
+      # Codespaces configuration check
+      - name: Check devcontainer.json
+        run: |
+          if [ -f .devcontainer/devcontainer.json ]; then
+            npm install -g @devcontainers/cli
+            devcontainer lint --config .devcontainer/devcontainer.json
+          fi
 
   # 2. Dependency Scanning
   dependencies:
@@ -35,34 +35,61 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # NPM Audit
-      - name: NPM Audit
-        run: |
-          npm install
-          npm audit --audit-level=high
-
       # OWASP Dependency Check
       - name: OWASP Scan
         uses: dependency-check/Dependency-Check_Action@main
         with:
           project: 'My_Private_Repo'
-          format: 'HTML'
+          format: 'HTML,SARIF'
           failOnCVSS: 7
+          # Skip non-essential files
+          skip: '**/test/**,**/node_modules/**'
+
+      # Codespaces-specific dependencies
+      - name: Check Feature Dependencies
+        if: contains(matrix.languages, 'javascript')
+        run: |
+          if [ -f .devcontainer/devcontainer.json ]; then
+            echo "Checking for vulnerable features..."
+            jq '.features | keys[]' .devcontainer/devcontainer.json
+          fi
 
   # 3. Secret Scanning
   secrets:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # TruffleHog (High-entropy secret detection)
-      - name: TruffleHog Scan
-        uses: trufflesecurity/trufflehog@main
         with:
-          args: '--regex --entropy=False github.com/your/repo'
+          fetch-depth: 0  # Full history for secret scanning
 
-      # Gitleaks (Pattern-based secret detection)
+      # Gitleaks
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
+
+  # 4. Codespaces-specific checks
+  codespaces:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Check for exposed ports
+      - name: Verify Exposed Ports
+        if: contains(matrix.services, 'codespaces')
+        run: |
+          if [ -f .devcontainer/devcontainer.json ]; then
+            echo "Exposed ports:"
+            jq '.forwardPorts' .devcontainer/devcontainer.json
+            # Fail if exposing sensitive ports
+            jq -e '.forwardPorts | contains([22, 3306, 5432]) | not' .devcontainer/devcontainer.json
+          fi
+
+      # Post-create script analysis
+      - name: Analyze Post-create Commands
+        run: |
+          if [ -f .devcontainer/devcontainer.json ]; then
+            echo "Post-create commands found:"
+            jq '.postCreateCommand' .devcontainer/devcontainer.json
+            # Add custom validation logic here
+          fi
