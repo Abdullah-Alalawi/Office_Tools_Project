@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.540.0",        
+    "@aws-sdk/client-s3": "3.540.0",        
     "prosemirror-state": "^1.4.2",
     "prosemirror-view": "^1.31.2",
     "prosemirror-model": "^1.18.1",
