@@ -20,8 +20,8 @@ jobs:
         with:
           config: "p/react"
           secrets: true  # Enable secret detection in code
-          env:
-            SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
       # ESLint security audit
       - name: Run ESLint Security Audit
