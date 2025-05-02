@@ -8,13 +8,25 @@ on:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  # 1. React-Specific SAST
+  # 1. React-Specific SAST (Updated)
   sast:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # React-focused Semgrep rules
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Clean Install
+        run: |
+          npm ci
+          npm install -g npm-check-updates
+          ncu -u --deprecated
+          npm install
+          npm audit fix
+
       - name: Run Semgrep (React)
         uses: returntocorp/semgrep-action@v1
         with:
@@ -23,13 +35,32 @@ jobs:
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
-      # ESLint security audit
-      - name: Run ESLint Security Audit
+      - name: Configure ESLint for React
         run: |
-          npm install eslint-plugin-security --save-dev
-          npx eslint src/ --no-eslintrc --rule 'security/detect-object-injection: 2' \
-            --rule 'security/detect-non-literal-require: 2' \
-            --rule 'security/detect-possible-timing-attacks: 2'
+          echo '{
+            "parser": "@babel/eslint-parser",
+            "parserOptions": {
+              "ecmaVersion": 2021,
+              "sourceType": "module",
+              "ecmaFeatures": {
+                "jsx": true
+              },
+              "requireConfigFile": false
+            },
+            "env": {
+              "browser": true,
+              "es2021": true
+            },
+            "plugins": ["security"],
+            "rules": {
+              "security/detect-object-injection": 2,
+              "security/detect-non-literal-require": 2,
+              "security/detect-possible-timing-attacks": 2
+            }
+          }' > .eslintrc.json
+
+      - name: Run ESLint Security Audit
+        run: npx eslint src/
 
   # 2. Dependency Scanning (React-focused)
   dependencies:
@@ -42,7 +73,7 @@ jobs:
         uses: dependency-check/Dependency-Check_Action@main
         with:
           project: 'Office_Tools_Kit'
-          format: 'ALL'  # Changed from 'HTML,SARIF' to 'ALL'
+          format: 'ALL'
           failOnCVSS: 7
           skip: '**/__tests__/**,**/cypress/**,**/node_modules/**'
           scanPath: 'src/'
