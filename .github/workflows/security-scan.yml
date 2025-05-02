@@ -1,40 +1,83 @@
-name: Advanced Security Scan
+name: Third party Security Scans 
 on:
   push:
-    branches: [main, release/*]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  advanced-security:
+  # 1. SAST (Static Application Security Testing)
+  sast:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2  
+      - uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
+      # Semgrep (Pattern-based scanning)
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/default"
+
+      # CodeQL (Limited version without GHAS)
+      - name: CodeQL Initialize
         uses: github/codeql-action/init@v2
         with:
-          languages: javascript  
-          queries: security-extended
+          languages: javascript,typescript
 
-      - name: Perform CodeQL Analysis
+      - name: CodeQL Analyze
         uses: github/codeql-action/analyze@v2
-        with:
-          category: "/language:javascript"
 
-      # Built-in secret scanning (no additional tools needed)
-      - name: Secret Scanning Alert
-        if: ${{ github.event_name == 'push' }}
+  # 2. Dependency Scanning
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # NPM Audit
+      - name: NPM Audit
         run: |
-          echo "GitHub automatically scans for secrets on push events"
-          echo "View results at: https://github.com/${{ github.repository }}/security/secret-scanning"
+          npm install
+          npm audit --audit-level=high
+
+      # OWASP Dependency Check
+      - name: OWASP Scan
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'My_Private_Repo'
+          format: 'HTML'
+          failOnCVSS: 7
+
+  # 3. Secret Scanning
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # TruffleHog (High-entropy secret detection)
+      - name: TruffleHog Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          args: '--regex --entropy=False github.com/your/repo'
+
+      # Gitleaks (Pattern-based secret detection)
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+
+  # 4. Container Scanning (if applicable)
+  containers:
+    runs-on: ubuntu-latest
+    if: contains(fromJson('["Dockerfile"]', 'Dockerfile')
+    steps:
+      - uses: actions/checkout@v4
+
+      # Trivy Container Scan
+      - name: Scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
