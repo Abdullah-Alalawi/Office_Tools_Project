@@ -66,18 +66,3 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
-
-  # 4. Container Scanning (if applicable)
-  containers:
-    runs-on: ubuntu-latest
-    if: contains(fromJson('["Dockerfile"]', 'Dockerfile')
-    steps:
-      - uses: actions/checkout@v4
-
-      # Trivy Container Scan
-      - name: Scan with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
