@@ -22,9 +22,9 @@ const Translator = () => {
 
       // IAM Role with fullAccess to the aws translation service 
       AWS.config.update({
-        accessKeyId: "AKIA4SZHNUCGVGPXHAMT",
-        secretAccessKey: "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",
-        region: "eu-north-1",
+        accessKeyId: process.env.REACT_APP_AWS_KEY_ID,
+        secretAccessKey: process.env.REACT_APP_AWS_ACCESS_KEY,
+        region: process.env.REACT_APP_AWS_REGION,
       });
       
       const translate = new AWS.Translate();

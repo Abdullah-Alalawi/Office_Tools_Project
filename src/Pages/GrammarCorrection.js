@@ -153,7 +153,7 @@ const GrammaerChecker = () => {
 
   setIsLoading(true);
   try {
-    const response = await axios.post('https://api.languagetool.org/v2/check', {
+    const response = await axios.post( process.env.REACT_APP_LANGUAGETOOL_API_URL, {
       text: text,
       language: 'en-US'
     }, {

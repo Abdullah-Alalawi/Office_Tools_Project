@@ -68,7 +68,6 @@ const AIChat = () => {
 
 
 
-    const API_URL = "https://zhehrlhsxh.execute-api.eu-north-1.amazonaws.com/COE452_proj/ChatBot";
     
     // Function to POST data to the API
     const postData = async (event) => {
@@ -81,19 +80,9 @@ const AIChat = () => {
 
 
         const openai = new OpenAI({
-          apiKey: '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' ,
+          apiKey: process.env.REACT_APP_GPT_API_KEY,
           dangerouslyAllowBrowser: true 
         });
-
-
-        /*const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-  
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }*/
 
         const chatCompletion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
@@ -103,8 +92,6 @@ const AIChat = () => {
       
         const AI_Response = chatCompletion.choices[0].message.content
 
-        /*const result = await response.json();
-        const temp = JSON.parse(result['body']);*/
         setAi_Reply(AI_Response);
         ChatLogs.push({
           id: ChatLogs.length+1 ,
@@ -125,8 +112,6 @@ const AIChat = () => {
   
 
     const HandleSubmit = (event) => {
-      //if(event.key == "Enter"){
-     // console.log(today(getLocalTimeZone()));}
      if(event.key == "Enter"){
      ChatLogs.push({
       id: ChatLogs.length+1 ,
@@ -134,12 +119,10 @@ const AIChat = () => {
       time:"9:30 AM",
       Message:ChatMessage,
       user:"Human"});
-      
-
+    
       postData(event);
 
       setChatMessage("");
-      //ttomRef.current?.scrollIntoView({ behavior: "smooth" });
      }
 
 

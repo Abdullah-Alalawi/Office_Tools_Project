@@ -67,8 +67,9 @@ const AIChatDeepSeek = () => {
 
 
 
-   const DEEPSEEK_API_KEY = "sk-50187b6633b747619a23afc19d8a562f";  // Get it from https://platform.deepseek.com/
-   const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+   const DEEPSEEK_API_KEY = process.env.REACT_APP_DEEPSEEK_API_KEY;
+   const DEEPSEEK_API_URL = process.env.REACT_APP_DEEPSEEK_API_URL;
+   
     
     // Function to POST data to the API
     const postData = async (event) => {

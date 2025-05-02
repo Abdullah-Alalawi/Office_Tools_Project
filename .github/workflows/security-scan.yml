@@ -1,0 +1,30 @@
+name: Security Scan
+on:
+  push:
+    branches: [main, release/*]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly scans
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: CodeQL Analysis
+        uses: github/codeql-action@v2
+        with:
+          queries: security-extended
+
+      - name: Check for exposed secrets
+        uses: gitguardian/ggshield-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
