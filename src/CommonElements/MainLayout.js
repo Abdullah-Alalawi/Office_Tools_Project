@@ -2,7 +2,6 @@
 import React from "react";
 import SideBar from "./SideBar";
 import { Button } from "@nextui-org/react";
-import { IoIosNotificationsOutline } from "react-icons/io";
 
 const MainLayout = ({ title, children, sidebarButtons, userName, userType }) => {
   return (
@@ -12,9 +11,6 @@ const MainLayout = ({ title, children, sidebarButtons, userName, userType }) => 
         <header className="border-b bg-white w-full py-2">
           <div className="p-3 pr-8 pl-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h1 className="font-semibold text-xl text-tarkeeznavy mb-2 sm:mb-0">{title}</h1>
-            <Button isIconOnly={true} className="bg-transparent border">
-              
-            </Button>
           </div>
         </header>
 
