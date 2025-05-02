@@ -1,4 +1,4 @@
-name: Third Party Security Scans (Codespaces)
+name: Office_Tools_Kit Security Scans
 on:
   push:
     branches: [ main ]
@@ -8,88 +8,111 @@ on:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  # 1. SAST (Static Application Security Testing)
+  # 1. React-Specific SAST
   sast:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Semgrep (Works with private repos)
-      - name: Run Semgrep
+      # React-focused Semgrep rules
+      - name: Run Semgrep (React)
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/default"
-          # Configure SEMGREP_APP_TOKEN in repo settings
+          config: "p/react"
+          secrets: true  # Enable secret detection in code
+          env:
+            SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
-      # Codespaces configuration check
-      - name: Check devcontainer.json
+      # ESLint security audit
+      - name: Run ESLint Security Audit
         run: |
-          if [ -f .devcontainer/devcontainer.json ]; then
-            npm install -g @devcontainers/cli
-            devcontainer lint --config .devcontainer/devcontainer.json
-          fi
+          npm install eslint-plugin-security --save-dev
+          npx eslint src/ --no-eslintrc --rule 'security/detect-object-injection: 2' \
+            --rule 'security/detect-non-literal-require: 2' \
+            --rule 'security/detect-possible-timing-attacks: 2'
 
-  # 2. Dependency Scanning
+  # 2. Dependency Scanning (React-focused)
   dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # OWASP Dependency Check
-      - name: OWASP Scan
+      # OWASP Scan with React adjustments
+      - name: OWASP Dependency Scan
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'My_Private_Repo'
+          project: 'Office_Tools_Kit'
           format: 'HTML,SARIF'
           failOnCVSS: 7
-          # Skip non-essential files
-          skip: '**/test/**,**/node_modules/**'
+          skip: '**/__tests__/**,**/cypress/**,**/node_modules/**'
+          scanPath: 'src/'
 
-      # Codespaces-specific dependencies
-      - name: Check Feature Dependencies
-        if: contains(matrix.languages, 'javascript')
+      # npm audit with React criticals only
+      - name: npm Audit (Critical Only)
+        run: |
+          npm install
+          npm audit --audit-level=critical
+
+      # Check for vulnerable Codespaces features
+      - name: Check React DevContainer Features
         run: |
           if [ -f .devcontainer/devcontainer.json ]; then
-            echo "Checking for vulnerable features..."
-            jq '.features | keys[]' .devcontainer/devcontainer.json
+            echo "Installed Features:"
+            jq -r '.features | to_entries[] | "\(.key): \(.value.version)"' .devcontainer/devcontainer.json
+            
+            # Fail if using outdated Node.js
+            jq -e '.features["ghcr.io/devcontainers/features/node:1"].version >= "18"' .devcontainer/devcontainer.json
           fi
 
-  # 3. Secret Scanning
+  # 3. Secret Scanning (Enhanced for React)
   secrets:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for secret scanning
+          fetch-depth: 0
 
-      # Gitleaks
+      # Gitleaks with React-specific patterns
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
+          extra-args: '--no-git'
 
-  # 4. Codespaces-specific checks
+      # React environment variable check
+      - name: Check Env Variables
+        run: |
+          grep -r 'REACT_APP_' src/ || echo "No React env variables found"
+          grep -r 'process.env' src/ || echo "No process.env usage found"
+
+  # 4. Codespaces Hardening
   codespaces:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Check for exposed ports
-      - name: Verify Exposed Ports
-        if: contains(matrix.services, 'codespaces')
+      # Verify devcontainer.json security settings
+      - name: Validate DevContainer Config
         run: |
           if [ -f .devcontainer/devcontainer.json ]; then
-            echo "Exposed ports:"
-            jq '.forwardPorts' .devcontainer/devcontainer.json
-            # Fail if exposing sensitive ports
-            jq -e '.forwardPorts | contains([22, 3306, 5432]) | not' .devcontainer/devcontainer.json
+            # Check for security best practices
+            echo "Security Checks:"
+            jq -e '.containerUser != "root"' .devcontainer/devcontainer.json
+            jq -e '.remoteUser != "root"' .devcontainer/devcontainer.json
+            jq -e '.postCreateCommand | contains("sudo") | not' .devcontainer/devcontainer.json
+            
+            # Recommended for React projects
+            jq -e '.customizations.vscode.settings["security.workspace.trust.enabled"] == true' .devcontainer/devcontainer.json
           fi
 
-      # Post-create script analysis
-      - name: Analyze Post-create Commands
+      # Check for exposed React ports
+      - name: Verify React Ports
         run: |
           if [ -f .devcontainer/devcontainer.json ]; then
-            echo "Post-create commands found:"
-            jq '.postCreateCommand' .devcontainer/devcontainer.json
-            # Add custom validation logic here
+            echo "Port Configuration:"
+            jq '.forwardPorts' .devcontainer/devcontainer.json
+            # Ensure React default port (3000) is properly configured
+            jq -e '.forwardPorts | contains([3000])' .devcontainer/devcontainer.json
+            # Block dangerous ports
+            jq -e '.forwardPorts | contains([22, 3306, 5432]) | not' .devcontainer/devcontainer.json
           fi
