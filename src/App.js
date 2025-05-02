@@ -13,7 +13,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/GrammaerChecker" replace />} />
+        <Route path="/" element={<Navigate to="/Login" replace />} />
         <Route path="/Translator" element={<Translator />} />
         <Route path="/AIChatGPT" element={<AIChatGPT />} /> 
         <Route path="/AIChatDeepSeek" element={<AIChatDeepSeek />} /> 
