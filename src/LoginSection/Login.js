@@ -92,10 +92,10 @@ const Login = () => {
       <div className="login-box">
       <img src="/mainLogo.png" alt="Office Tools Kit" class="mainLogo"/>
         <h2 className="welcome">Welcome</h2>
-        <p className="login-text">Login with Email or username</p>
+        <p className="login-text">Login with Email and Password</p>
         
         <div className="input-group floating-label">
-            <input type="text" id="email" required placeholder="Email or Username" value={Email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="text" id="email" required placeholder="Please Enter your Email " value={Email} onChange={(e) => setEmail(e.target.value)} />
             <label htmlFor="email">User Id</label>
           <span className="icon">📧</span> 
             </div>
