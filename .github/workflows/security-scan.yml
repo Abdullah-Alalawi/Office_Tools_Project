@@ -19,7 +19,7 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/react"
-          secrets: true  # Enable secret detection in code
+          secrets: true
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
@@ -42,10 +42,11 @@ jobs:
         uses: dependency-check/Dependency-Check_Action@main
         with:
           project: 'Office_Tools_Kit'
-          format: 'HTML,SARIF'
+          format: 'ALL'  # Changed from 'HTML,SARIF' to 'ALL'
           failOnCVSS: 7
           skip: '**/__tests__/**,**/cypress/**,**/node_modules/**'
           scanPath: 'src/'
+          outputDirectory: './reports'
 
       # npm audit with React criticals only
       - name: npm Audit (Critical Only)
@@ -59,8 +60,6 @@ jobs:
           if [ -f .devcontainer/devcontainer.json ]; then
             echo "Installed Features:"
             jq -r '.features | to_entries[] | "\(.key): \(.value.version)"' .devcontainer/devcontainer.json
-            
-            # Fail if using outdated Node.js
             jq -e '.features["ghcr.io/devcontainers/features/node:1"].version >= "18"' .devcontainer/devcontainer.json
           fi
 
@@ -95,13 +94,10 @@ jobs:
       - name: Validate DevContainer Config
         run: |
           if [ -f .devcontainer/devcontainer.json ]; then
-            # Check for security best practices
             echo "Security Checks:"
             jq -e '.containerUser != "root"' .devcontainer/devcontainer.json
             jq -e '.remoteUser != "root"' .devcontainer/devcontainer.json
             jq -e '.postCreateCommand | contains("sudo") | not' .devcontainer/devcontainer.json
-            
-            # Recommended for React projects
             jq -e '.customizations.vscode.settings["security.workspace.trust.enabled"] == true' .devcontainer/devcontainer.json
           fi
 
@@ -111,8 +107,6 @@ jobs:
           if [ -f .devcontainer/devcontainer.json ]; then
             echo "Port Configuration:"
             jq '.forwardPorts' .devcontainer/devcontainer.json
-            # Ensure React default port (3000) is properly configured
             jq -e '.forwardPorts | contains([3000])' .devcontainer/devcontainer.json
-            # Block dangerous ports
             jq -e '.forwardPorts | contains([22, 3306, 5432]) | not' .devcontainer/devcontainer.json
           fi
