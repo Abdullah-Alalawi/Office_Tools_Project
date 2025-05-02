@@ -15,23 +15,6 @@ const PasswordResetPage = () => {
   const navigate = useNavigate();
 
 
-  useEffect(() => {
-    const Token = !localStorage.getItem("Token")? localStorage.getItem("Token"): jwtDecode(localStorage.getItem("Token"));
-    const Name = localStorage.getItem("Name")
-    const Major = localStorage.getItem("Major")
-    const currentTime = Math.floor(Date.now() / 1000);
-    if ((!Token & !Name & !Major) || (Token.exp<=currentTime)  ) {
-      localStorage.setItem("Token", "");
-      localStorage.setItem("Email", "");
-      localStorage.setItem("Name", "");
-      localStorage.setItem("Major", "");
-      navigate("/LOGIN");
-    }
-    else {
-      navigate(localStorage.getItem("Path"));     
-    }
-  }, []);
-
   const validatePassword = (password) => {
     const errors = [];
     
