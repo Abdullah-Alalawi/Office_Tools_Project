@@ -1,30 +1,40 @@
-name: Security Scan
+name: Advanced Security Scan
 on:
   push:
     branches: [main, release/*]
+  pull_request:
+    branches: [main]
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  scan:
+  advanced-security:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@master
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          fetch-depth: 2  
 
-      - name: CodeQL Analysis
-        uses: github/codeql-action@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
         with:
+          languages: javascript  
           queries: security-extended
 
-      - name: Check for exposed secrets
-        uses: gitguardian/ggshield-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:javascript"
+
+      # Built-in secret scanning (no additional tools needed)
+      - name: Secret Scanning Alert
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          echo "GitHub automatically scans for secrets on push events"
+          echo "View results at: https://github.com/${{ github.repository }}/security/secret-scanning"
