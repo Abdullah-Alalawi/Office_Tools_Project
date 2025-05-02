@@ -90,7 +90,7 @@ const Login = () => {
   return (
     <div className="login-container">
       <div className="login-box">
-      <img src="/mainLogo.PNG" alt="Sculpture Tools Kit" class="mainLogo"/>
+      <img src="/mainLogo.png" alt="Office Tools Kit" class="mainLogo"/>
         <h2 className="welcome">Welcome</h2>
         <p className="login-text">Login with Email or username</p>
         

@@ -49,7 +49,7 @@ const SendEmailPage = () => {
     <div className="login-container">
       <div className="image-side"></div>
       <div className="login-box">
-        <img src="/mainLogo.PNG" alt="Sculpture Tools Kit" className="mainLogo" />
+        <img src="/mainLogo.png" alt="Office Tools Kit" className="mainLogo" />
         <h2 className="login-text">Did You Forget Your Password ?</h2>
         
         <div className="input-group floating-label">
