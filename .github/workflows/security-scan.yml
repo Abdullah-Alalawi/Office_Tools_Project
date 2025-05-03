@@ -8,7 +8,7 @@ on:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  # 1. React-Specific SAST (Updated)
+  # 1. React-Specific SAST (Fully Fixed Version)
   sast:
     runs-on: ubuntu-latest
     steps:
@@ -22,10 +22,11 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install --legacy-peer-deps
-          npm install eslint-plugin-security@latest --save-dev
-          npm install @babel/eslint-parser@latest --save-dev
+          npm install eslint-plugin-security@latest @babel/eslint-parser@latest --save-dev
+          npm install @babel/preset-react@latest --save-dev
+          npx update-browserslist-db@latest
 
-      - name: Configure ESLint for React
+      - name: Configure ESLint and Babel
         run: |
           echo '{
             "parser": "@babel/eslint-parser",
@@ -35,7 +36,10 @@ jobs:
               "ecmaFeatures": {
                 "jsx": true
               },
-              "requireConfigFile": false
+              "requireConfigFile": false,
+              "babelOptions": {
+                "presets": ["@babel/preset-react"]
+              }
             },
             "env": {
               "browser": true,
@@ -48,6 +52,10 @@ jobs:
               "security/detect-possible-timing-attacks": 2
             }
           }' > .eslintrc.json
+
+          echo '{
+            "presets": ["@babel/preset-react"]
+          }' > .babelrc.json
 
       - name: Run ESLint Security Audit
         run: npx eslint src/
