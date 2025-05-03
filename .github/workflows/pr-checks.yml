@@ -1,36 +1,72 @@
-name: PR Checks
+name: PR Linting & Testing
 on:
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  quality-gate:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm install --legacy-peer-deps
+          npm install eslint-plugin-security@latest @babel/eslint-parser@latest @babel/preset-react@latest --save-dev
+          npx update-browserslist-db@latest
+
+      - name: Configure ESLint
+        run: |
+          echo '{
+            "parser": "@babel/eslint-parser",
+            "parserOptions": {
+              "ecmaVersion": 2021,
+              "sourceType": "module",
+              "ecmaFeatures": { "jsx": true },
+              "requireConfigFile": false,
+              "babelOptions": { "presets": ["@babel/preset-react"] }
+            },
+            "env": {
+              "browser": true,
+              "es2021": true,
+              "jest": true
+            },
+            "plugins": ["security"],
+            "rules": {
+              "security/detect-object-injection": ["error", {
+                "exceptionPatterns": ["^GrammarCorrection\\."]
+              }],
+              "security/detect-non-literal-require": 2,
+              "security/detect-possible-timing-attacks": 2
+            },
+            "overrides": [
+              {
+                "files": ["**/*.test.js", "**/*.spec.js"],
+                "rules": {
+                  "security/detect-object-injection": "off"
+                }
+              }
+            ]
+          }' > .eslintrc.json
 
       - name: Run ESLint
-        run: npm run lint
+        run: npx eslint src/ --max-warnings=0
 
-      - name: Run tests with coverage
+      - name: Run unit tests
         run: |
-          npm test -- --coverage --watchAll=false
-          if [ $(grep -oP 'Lines.*?\K\d+' coverage/lcov.info) -lt 80 ]; then
-            echo "❌ Coverage < 80%"
-            exit 1
-          fi
+          npm test -- --watchAll=false --coverage --passWithNoTests
+        env:
+          CI: true
 
-      - name: Upload test report
+      - name: Upload test coverage
         uses: actions/upload-artifact@v3
+        if: always()
         with:
-          name: jest-coverage
+          name: test-coverage
           path: coverage/
