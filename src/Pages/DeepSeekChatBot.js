@@ -1,8 +1,6 @@
-import React, { useState ,useRef ,useEffect} from "react";
+import React, { useState  ,useEffect} from "react";
 import MainLayout from "../CommonElements/MainLayout";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Button, Tooltip ,  Card,
-    CardBody,CardFooter,Input,Spacer, ScrollShadow, Textarea, Avatar} from "@nextui-org/react";
-import { PiArrowsLeftRightBold } from "react-icons/pi";
+import { Button ,  Card,CardBody,CardFooter,Input,Spacer, Textarea, Avatar} from "@nextui-org/react";
 import { MdOutlineTranslate } from "react-icons/md";
 import { IoChatbubbles } from "react-icons/io5";
 import { IoSend } from "react-icons/io5";
