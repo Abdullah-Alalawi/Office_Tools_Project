@@ -8,7 +8,7 @@ on:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  # 1. React-Specific SAST (Updated with dependency resolution)
+  # 1. React-Specific SAST (Updated)
   sast:
     runs-on: ubuntu-latest
     steps:
@@ -19,22 +19,11 @@ jobs:
         with:
           node-version: 18
 
-      - name: Resolve Dependency Conflicts
+      - name: Install Dependencies
         run: |
-          # Install with legacy peer deps to bypass version conflicts
           npm install --legacy-peer-deps
-          # Update specific conflicting packages
-          npm install framer-motion@latest @heroui/react@latest --legacy-peer-deps
-          # Create resolution in package.json
-          npm pkg set "resolutions.framer-motion"="^11.11.17"
-
-      - name: Run Semgrep (React)
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: "p/react"
-          secrets: true
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+          npm install eslint-plugin-security@latest --save-dev
+          npm install @babel/eslint-parser@latest --save-dev
 
       - name: Configure ESLint for React
         run: |
