@@ -7,7 +7,7 @@ import {  Textarea, Card,CardBody, Select, SelectItem , Spacer} from "@nextui-or
 import { LuBookOpenCheck } from "react-icons/lu";
 import AWS from "aws-sdk";
 import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+
 
 
 const Translator = () => {
@@ -22,8 +22,8 @@ const Translator = () => {
 
       // IAM Role with fullAccess to the aws translation service 
       AWS.config.update({
-        accessKeyId: process.env.REACT_APP_AWS_KEY_ID,
-        secretAccessKey: process.env.REACT_APP_AWS_ACCESS_KEY,
+        accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
         region: process.env.REACT_APP_AWS_REGION,
       });
       
@@ -113,30 +113,7 @@ const Translator = () => {
     const [selectedLangTo, setSelectedLangTo] = useState(new Set([""]));
     const [Text , setText] = useState("");
     const [TranslatedText , setTranslatedText] = useState("");
-    const [Name , setName] = useState("");
-    const [Major , setMajor] = useState("");
-    const Navigate = useNavigate();
-  
-  
-    useEffect(() => {
-      const Token = !localStorage.getItem("Token")? localStorage.getItem("Token"): jwtDecode(localStorage.getItem("Token"));
-      const Name = localStorage.getItem("Name")
-      const Major = localStorage.getItem("Major")
-      const currentTime = Math.floor(Date.now() / 1000);
-      
-      if ((!Token & !Name & !Major) || (Token.exp<=currentTime)  ) {
-        localStorage.setItem("Token", "");
-        localStorage.setItem("Email", "");
-        localStorage.setItem("Name", "");
-        localStorage.setItem("Major", "");
-        Navigate("/LOGIN");
-      }
-      else {
-        setName(Name)
-        setMajor(Major)
-        
-      }
-    }, []);
+
 
 
     const HandleLangSelectionFrom = async (LangFrom) => {
@@ -185,7 +162,7 @@ const Translator = () => {
     };
         
   return (
-    <MainLayout title="Translator" sidebarButtons={sidebarButtons} userName={Name} userType={Major}>
+    <MainLayout title="Translator" sidebarButtons={sidebarButtons} userName="" userType="">
         <Spacer y={64} />
         <div className="grid grid-cols-1 md:grid-cols-2 ">
             <Card>

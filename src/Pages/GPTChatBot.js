@@ -38,31 +38,8 @@ const AIChat = () => {
     
     const [ChatMessage , setChatMessage] = useState("");
     const [Ai_Reply  , setAi_Reply]= useState("");
-    const [Name , setName] = useState("");
-    const [Major , setMajor] = useState("");
-    const Navigate = useNavigate();
-  
-  
-    useEffect(() => {
-      const Token = !localStorage.getItem("Token")? localStorage.getItem("Token"): jwtDecode(localStorage.getItem("Token"));
-      const Name = localStorage.getItem("Name")
-      const Major = localStorage.getItem("Major")
-      const currentTime = Math.floor(Date.now() / 1000);
-      
-      if ((!Token & !Name & !Major) || (Token.exp<=currentTime)  ) {
-        localStorage.setItem("Token", "");
-        localStorage.setItem("Email", "");
-        localStorage.setItem("Name", "");
-        localStorage.setItem("Major", "");
-        Navigate("/LOGIN");
-      }
-      else {
-        setName(Name)
-        setMajor(Major)
-        
-      }
-    }, []);
-
+;
+ 
 
 
     
@@ -179,7 +156,7 @@ const AIChat = () => {
 
 
   return (
-    <MainLayout title="AI Chat Bot" sidebarButtons={sidebarButtons} userName={Name} userType={Major}>
+    <MainLayout title="AI Chat Bot" sidebarButtons={sidebarButtons} userName="" userType="">
       <div id="Conv" className="p-4 justify-items-stretch " >
         <h1 className="text-2xl font-bold mb-4">Your AI ChatBot</h1>
         <Card className=" lg:size-full  " >
