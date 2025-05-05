@@ -37,14 +37,7 @@ const AIChatDeepSeek = () => {
     const [TotalMessage , setTotalMessage] = useState([]);
     const [ChatMessage , setChatMessage] = useState("");
     const [Ai_Reply  , setAi_Reply]= useState("");
-   //onst bottomRef = useRef<HTMLDivElement>(document.getElementById("Conv"));
-   const [Name , setName] = useState("");
-   const [Major , setMajor] = useState("");
-   const Navigate = useNavigate();
  
- 
-
-
 
    const DEEPSEEK_API_KEY = process.env.REACT_APP_DEEPSEEK_API_KEY;
    const DEEPSEEK_API_URL = process.env.REACT_APP_DEEPSEEK_API_URL;
@@ -99,8 +92,7 @@ const AIChatDeepSeek = () => {
   
 
     const HandleSubmit = (event) => {
-      //if(event.key == "Enter"){
-     // console.log(today(getLocalTimeZone()));}
+
      if((event.key == "Enter") || (event.button === 0)){
      ChatLogs.push({
       id: ChatLogs.length+1 ,
@@ -113,7 +105,6 @@ const AIChatDeepSeek = () => {
       postData(event);
 
       setChatMessage("");
-      //ttomRef.current?.scrollIntoView({ behavior: "smooth" });
      }
 
 
