@@ -13,10 +13,8 @@ import { MdOutlineTranslate } from "react-icons/md";
 import { IoChatbubbles } from "react-icons/io5";
 import { LuBookOpenCheck } from "react-icons/lu";
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
 
-import 'prosemirror-view/style/prosemirror.css';
+
 
 const ERROR_CATEGORIES = {
   GRAMMAR: {
@@ -384,6 +382,7 @@ const GrammaerChecker = () => {
         <Card className="h-full">
           <CardBody className="flex flex-col gap-4">
             <div
+              data-testid="grammar-editor"
               ref={editorRef}
               style={{
                 position: 'relative',

@@ -6,9 +6,6 @@ import { IoChatbubbles } from "react-icons/io5";
 import { IoSend } from "react-icons/io5";
 import { LuBookOpenCheck } from "react-icons/lu";
 import OpenAI from 'openai';
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
-
 
 
 
@@ -110,7 +107,7 @@ const AIChat = () => {
                 <div className="flex gap-2 justify-start">
                 <Avatar showFallback src="https://images.unsplash.com/broken" />
                 <Textarea
-                 
+                  data-testid={"AI-Bubble " + ChatMessage.id}
                   className={` text-black text-wrap inline-block `}
                   variant="flat"
                   value= {ChatMessage.Message}
@@ -129,7 +126,7 @@ const AIChat = () => {
                 <Textarea
                   color="primary" 
                   className={` text-black inline-block  `}
-                  
+                  data-testid={"Human-Bubble " + ChatMessage.id}
                   variant="flat"
                   value= {ChatMessage.Message}
                   classNames={{
@@ -183,9 +180,9 @@ const AIChat = () => {
                   onChange={(e) => setChatMessage(e.target.value)}
                   
                   endContent={
-                    <Button size="lg"  onClick={HandleSubmit} color="primary"className={`bg-TweetBlue text-white h-10 min-w-[100px] mt-4 `}>
+                    <button size="lg" data-testid="send-button"  onClick={HandleSubmit} color="primary"className={`bg-TweetBlue text-white h-10 min-w-[100px] mt-4 `}>
                       <IoSend />
-                    </Button>
+                    </button>
                   }
                 />
             </CardFooter>

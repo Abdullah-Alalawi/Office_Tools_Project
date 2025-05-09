@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Translator from '../Pages/Translator';
 import AWS from 'aws-sdk';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock AWS Translate
 jest.mock('aws-sdk', () => {
@@ -29,7 +30,11 @@ describe('Translator API Response', () => {
     // Arrange: mock a successful translation response
     AWS.Translate().translateText().promise.mockResolvedValue(mockSuccessResponse);
 
-    render(<Translator />);
+    render(
+      <MemoryRouter>
+        <Translator />
+      </MemoryRouter>
+    );
 
     // Act: select source language "English"
     fireEvent.click(screen.getAllByRole('combobox')[0]);
@@ -63,7 +68,11 @@ describe('Translator API Response', () => {
     // Arrange: mock a failed translation response
     AWS.Translate().translateText().promise.mockRejectedValue(mockErrorResponse);
 
-    render(<Translator />);
+    render(
+      <MemoryRouter>
+        <Translator />
+      </MemoryRouter>
+    );
 
     // Act: select languages
     fireEvent.click(screen.getAllByRole('combobox')[0]);
