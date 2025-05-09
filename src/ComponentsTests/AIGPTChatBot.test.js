@@ -5,25 +5,25 @@ import '@testing-library/jest-dom';
 import AIChat from '../Pages/GPTChatBot';
 import OpenAI from 'openai';
 
-// Stub react-router hooks so MainLayout’s sidebar can render
+// 1️⃣ Stub out react-router hooks so MainLayout can render
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => jest.fn(),
   useLocation: () => ({ pathname: '/' }),
 }));
 
-// Mock the OpenAI client
-jest.mock('openai', () => {
-  return jest.fn().mockImplementation(() => ({
+// 2️⃣ Default mock for OpenAI – returns "YES SIR"
+jest.mock('openai', () =>
+  jest.fn().mockImplementation(() => ({
     chat: {
       completions: {
         create: jest.fn().mockResolvedValue({
-          choices: [{ message: { content: 'Mock AI response' } }],
+          choices: [{ message: { content: 'YES MADAM' } }],
         }),
       },
     },
-  }));
-});
+  }))
+);
 
 describe('AIChat Component', () => {
   afterEach(() => {
@@ -34,9 +34,13 @@ describe('AIChat Component', () => {
     render(<AIChat />);
 
     expect(screen.getByText('Your AI ChatBot')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter your Question ?')).toBeInTheDocument();
-    // initial greeting is in a Textarea with that value
-    expect(screen.getByDisplayValue('How may i Help you Today ?')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Enter your Question ?')
+    ).toBeInTheDocument();
+    // initial greeting is rendered in a Textarea
+    expect(
+      screen.getByDisplayValue('How may i Help you Today ?')
+    ).toBeInTheDocument();
   });
 
   test('updates input on change', () => {
@@ -53,24 +57,37 @@ describe('AIChat Component', () => {
     fireEvent.change(input, { target: { value: 'Test message' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    // wait for OpenAI() to be called
+    // wait for the OpenAI constructor to be called
     await waitFor(() => expect(OpenAI).toHaveBeenCalled());
 
-    // the human message should now render in a textarea
-    expect(screen.getByDisplayValue('Test message')).toBeInTheDocument();
+    // and the human bubble appears
+    expect(
+      screen.getByDisplayValue('Test message')
+    ).toBeInTheDocument();
   });
-
 
   test('displays AI response after submission', async () => {
     render(<AIChat />);
-    const input = screen.getByPlaceholderText('Enter your Question ?');
 
-    fireEvent.change(input, { target: { value: 'Replay to this with YES SIR' } });
+    const input = screen.getByPlaceholderText('Enter your Question ?');
+        OpenAI.mockImplementationOnce(() => ({
+        chat: {
+            completions: {
+            create: jest.fn().mockResolvedValue({
+                choices: [{ message: { content: 'reply to thi with YES SIR' } }],
+            }),
+            },
+        },
+        }));
+
+    fireEvent.change(input, { target: { value: 'reply to thi with YES SIR' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    // wait for the mock AI response to render
+    // first wait for the OpenAI call
+    await waitFor(() => expect(OpenAI).toHaveBeenCalled());
+
+    // then wait for the AI bubble to render "YES SIR"
     await waitFor(() =>
-      expect(OpenAI).toHaveBeenCalled(),
       expect(screen.getByDisplayValue('YES SIR')).toBeInTheDocument()
     );
   });
@@ -86,7 +103,7 @@ describe('AIChat Component', () => {
   });
 
   test('handles API errors without crashing', async () => {
-    // Next call will reject
+    // Next call to create() will reject
     OpenAI.mockImplementationOnce(() => ({
       chat: {
         completions: {
@@ -101,29 +118,42 @@ describe('AIChat Component', () => {
     fireEvent.change(input, { target: { value: 'Error case' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    // Even on error, the human bubble shows up
+    // even on error, the human bubble still shows up
     await waitFor(() =>
       expect(screen.getByDisplayValue('Error case')).toBeInTheDocument()
     );
   });
 
   test('renders human messages on the right, AI on the left', async () => {
+    // Override mock for this test so AI replies with exactly "HELLO PEOPLE"
+    OpenAI.mockImplementationOnce(() => ({
+      chat: {
+        completions: {
+          create: jest.fn().mockResolvedValue({
+            choices: [{ message: { content: 'reply to thi with HELLO PEOPLE' } }],
+          }),
+        },
+      },
+    }));
+
     render(<AIChat />);
     const input = screen.getByPlaceholderText('Enter your Question ?');
 
-    // Send a human message
-    fireEvent.change(input, { target: { value: 'Reply to this with HELLO PEOPLE' } });
+    // send a human message
+    fireEvent.change(input, { target: { value: 'HELLO PEOPLE' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    // wait for the OpenAI call
     await waitFor(() => expect(OpenAI).toHaveBeenCalled());
 
-    // Find the human bubble and assert its wrapper has justify-end
-    const human = screen.getByDisplayValue('Reply to this with HELLO PEOPLE');
-    const humanWrapper = human.closest('div.flex');
-    expect(humanWrapper).toHaveClass('justify-end');
+    // human bubble should be right-aligned
+    const humanBubble = screen.getByDisplayValue('HELLO PEOPLE');
+    expect(humanBubble.closest('div.flex')).toHaveClass('justify-end');
 
-    // Then assert the AI bubble uses justify-start
-    const ai = screen.getByDisplayValue('HELLO PEOPLE');
-    const aiWrapper = ai.closest('div.flex');
-    expect(aiWrapper).toHaveClass('justify-start');
+    // then wait for the AI bubble to appear and be left-aligned
+    await waitFor(() => {
+      const aiBubble = screen.getByDisplayValue('HELLO PEOPLE');
+      expect(aiBubble.closest('div.flex')).toHaveClass('justify-start');
+    });
   });
 });

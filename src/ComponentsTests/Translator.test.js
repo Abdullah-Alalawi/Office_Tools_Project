@@ -17,7 +17,6 @@ jest.mock('aws-sdk', () => {
   };
 });
 
-
 describe('Translator API Response', () => {
   const mockSuccessResponse = { TranslatedText: 'Bonjour le monde' };
   const mockErrorResponse = new Error('Translation failed');
@@ -27,7 +26,6 @@ describe('Translator API Response', () => {
   });
 
   test('displays translated text when API call succeeds', async () => {
-    // Arrange: mock a successful translation response
     AWS.Translate().translateText().promise.mockResolvedValue(mockSuccessResponse);
 
     render(
@@ -36,20 +34,19 @@ describe('Translator API Response', () => {
       </MemoryRouter>
     );
 
-    // Act: select source language "English"
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    fireEvent.click(await screen.findByText('English'));
+    const [fromSelectBtn, toSelectBtn] = screen.getAllByRole('button', {
+      name: /Select Language/,
+    });
 
-    // Act: select target language "French"
-    fireEvent.click(screen.getAllByRole('combobox')[1]);
-    fireEvent.click(await screen.findByText('French'));
+    fireEvent.click(fromSelectBtn);
+    fireEvent.click(await screen.findByRole('option', { name: 'English' }));
+    fireEvent.click(toSelectBtn);
+    fireEvent.click(await screen.findByRole('option', { name: 'French' }));
 
-    // Act: type into the "FROM" textarea
     fireEvent.change(screen.getByLabelText('FROM'), {
       target: { value: 'Hello world' },
     });
 
-    // Assert: AWS.Translate.translateText was called with correct params
     await waitFor(() => {
       expect(AWS.Translate().translateText).toHaveBeenCalledWith({
         Text: 'Hello world',
@@ -58,14 +55,12 @@ describe('Translator API Response', () => {
       });
     });
 
-    // Assert: translated text appears in the "TO" textarea
     await waitFor(() => {
       expect(screen.getByLabelText('TO')).toHaveValue('Bonjour le monde');
     });
   });
 
   test('handles API error gracefully', async () => {
-    // Arrange: mock a failed translation response
     AWS.Translate().translateText().promise.mockRejectedValue(mockErrorResponse);
 
     render(
@@ -74,18 +69,22 @@ describe('Translator API Response', () => {
       </MemoryRouter>
     );
 
-    // Act: select languages
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    fireEvent.click(await screen.findByText('English'));
-    fireEvent.click(screen.getAllByRole('combobox')[1]);
-    fireEvent.click(await screen.findByText('French'));
+    const [fromSelectBtn, toSelectBtn] = screen.getAllByRole('button', {
+      name: /Select Language/,
+    });
 
-    // Act: type into the "FROM" textarea
+    fireEvent.click(fromSelectBtn);
+    fireEvent.click(await screen.findByRole('option', { name: 'English' }));
+    fireEvent.click(toSelectBtn);
+    fireEvent.click(await screen.findByRole('option', { name: 'French' }));
+
     fireEvent.change(screen.getByLabelText('FROM'), {
       target: { value: 'Hello world' },
     });
 
-    // Assert: on error, the "TO" textarea remains empty
+    await waitFor(() => expect(AWS.Translate().translateText).toHaveBeenCalled());
+
+    // On error the TO textarea stays empty
     await waitFor(() => {
       expect(screen.getByLabelText('TO')).toHaveValue('');
     });
