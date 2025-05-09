@@ -13,8 +13,7 @@ import { MdOutlineTranslate } from "react-icons/md";
 import { IoChatbubbles } from "react-icons/io5";
 import { LuBookOpenCheck } from "react-icons/lu";
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+
 
 import 'prosemirror-view/style/prosemirror.css';
 
@@ -110,30 +109,10 @@ const GrammaerChecker = () => {
   const [lastChangeTime, setLastChangeTime] = useState(0);
   const checkTimeoutRef = useRef(null);
 
-  const [Name , setName] = useState("");
-  const [Major , setMajor] = useState("");
-  const Navigate = useNavigate();
+
     
     
-  useEffect(() => {
-    const Token = !localStorage.getItem("Token")? localStorage.getItem("Token"): jwtDecode(localStorage.getItem("Token"));
-    const Name = localStorage.getItem("Name")
-    const Major = localStorage.getItem("Major")
-    const currentTime = Math.floor(Date.now() / 1000);
-    
-    if ((!Token & !Name & !Major) || (Token.exp<=currentTime)  ) {
-      localStorage.setItem("Token", "");
-      localStorage.setItem("Email", "");
-      localStorage.setItem("Name", "");
-      localStorage.setItem("Major", "");
-      Navigate("/LOGIN");
-    }
-    else {
-      setName(Name)
-      setMajor(Major)
-      
-    }
-  }, []);
+
 
  const checkText = async (text) => {
   if (text.trim().length < 3) {
@@ -400,8 +379,8 @@ const GrammaerChecker = () => {
     <MainLayout 
       title="Grammar & Spell Checker" 
       sidebarButtons={sidebarButtons} 
-      userName={Name}
-      userType={Major}
+      userName=""
+      userType=""
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         <Card className="h-full">

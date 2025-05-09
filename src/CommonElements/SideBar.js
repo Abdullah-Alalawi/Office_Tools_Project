@@ -29,30 +29,7 @@ const SideBar = ({ buttons, userName, userType }) => {
     navigate(path);
   };
 
-  const HandleSignOut = async () => {
-    const Email = localStorage.getItem("Email"); 
-    localStorage.setItem("Email", "");
-    localStorage.setItem("Token", "");
-    localStorage.setItem("Name", "");
-    localStorage.setItem("Major", "");
-    try {
-      const payload ={  
-        "body": {"action" :"signOut","username":Email}
-      } 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      navigate("/LOGIN");
-    } catch (error) {
-      console.error("POST Error:", error.message);
-    }
-  }
 
   return (
     <div className="bg-white z-0 min-w-72 max-w-72 relative">
@@ -87,26 +64,7 @@ const SideBar = ({ buttons, userName, userType }) => {
             </div>
           </div>
 
-          <div className="p-4 py-8 flex space-x-2 items-center">
-            <img src={profileImage} className="w-11 h-11" alt="Profile" />
-            <div className="flex flex-col items-start">
-              <p className="font-semibold">{userName}</p>
-              <p className="text-textlightgray">{userType}</p>
-            </div>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly={true} className="bg-transparent rounded-3xl">
-                  <IoMdArrowDropdown className="text-2xl text-kfupmgreen" />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="User Options">
-              <DropdownItem key="logout"  color="danger" className="text-red-400" onClick={HandleSignOut}>
-                  Logout
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
 
-          </div>
 
 
         </div>
