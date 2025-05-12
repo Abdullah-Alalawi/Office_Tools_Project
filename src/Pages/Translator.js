@@ -1,6 +1,5 @@
-import React, {useEffect,useState} from "react";
+import React, {useState} from "react";
 import MainLayout from "../CommonElements/MainLayout";
-import { PiArrowsLeftRightBold } from "react-icons/pi"
 import { MdOutlineTranslate } from "react-icons/md";
 import { IoChatbubbles } from "react-icons/io5";
 import {  Textarea, Card,CardBody, Select, SelectItem , Spacer} from "@nextui-org/react";

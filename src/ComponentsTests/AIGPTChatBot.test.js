@@ -18,7 +18,7 @@ jest.mock('openai', () =>
     chat: {
       completions: {
         create: jest.fn().mockResolvedValue({
-          choices: [{ message: { content: 'YES MADAM' } }],
+          choices: [{ message: { content: 'Hi' } }],
         }),
       },
     },
@@ -74,7 +74,7 @@ describe('AIChat Component', () => {
         chat: {
             completions: {
             create: jest.fn().mockResolvedValue({
-                choices: [{ message: { content: 'reply to thi with YES SIR' } }],
+                choices: [{ message: { content: 'YES SIR' } }],
             }),
             },
         },
@@ -130,7 +130,7 @@ describe('AIChat Component', () => {
       chat: {
         completions: {
           create: jest.fn().mockResolvedValue({
-            choices: [{ message: { content: 'reply to thi with HELLO PEOPLE' } }],
+            choices: [{ message: { content: 'HELLO MADAM' } }],
           }),
         },
       },
@@ -140,19 +140,20 @@ describe('AIChat Component', () => {
     const input = screen.getByPlaceholderText('Enter your Question ?');
 
     // send a human message
-    fireEvent.change(input, { target: { value: 'HELLO PEOPLE' } });
+    fireEvent.change(input, { target: { value: 'reply to this with HELLO MADAM' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
     // wait for the OpenAI call
     await waitFor(() => expect(OpenAI).toHaveBeenCalled());
 
     // human bubble should be right-aligned
-    const humanBubble = screen.getByDisplayValue('HELLO PEOPLE');
+     await waitFor(() => {
+    const humanBubble = screen.getByDisplayValue('reply to this with HELLO MADAM');
     expect(humanBubble.closest('div.flex')).toHaveClass('justify-end');
-
+    });
     // then wait for the AI bubble to appear and be left-aligned
     await waitFor(() => {
-      const aiBubble = screen.getByDisplayValue('HELLO PEOPLE');
+      const aiBubble = screen.getByDisplayValue('HELLO MADAM');
       expect(aiBubble.closest('div.flex')).toHaveClass('justify-start');
     });
   });

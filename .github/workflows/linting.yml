@@ -60,3 +60,5 @@ jobs:
 
       - name: Run ESLint
         run: npx eslint src/ --max-warnings=0
++     - name: Run ESLint
++       run: npx eslint "src/**/*.{js,jsx,ts,tsx}" --max-warnings=0

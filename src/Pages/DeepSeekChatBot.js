@@ -1,4 +1,4 @@
-import React, { useState  ,useEffect} from "react";
+import React, { useState } from "react";
 import MainLayout from "../CommonElements/MainLayout";
 import { Button ,  Card,CardBody,CardFooter,Input,Spacer, Textarea, Avatar} from "@nextui-org/react";
 import { MdOutlineTranslate } from "react-icons/md";
@@ -17,11 +17,7 @@ const ChatLogs = [
 
 ];
 
-const statusColorMap = {
-  Confirmed: "success",
-  Pending: "warning",
-  Cancelled: "danger",
-};
+
 
 const AIChatDeepSeek = () => {
   const sidebarButtons = [
@@ -36,7 +32,6 @@ const AIChatDeepSeek = () => {
     
     const [TotalMessage , setTotalMessage] = useState([]);
     const [ChatMessage , setChatMessage] = useState("");
-    const [Ai_Reply  , setAi_Reply]= useState("");
    //onst bottomRef = useRef<HTMLDivElement>(document.getElementById("Conv"));
 
 
@@ -48,7 +43,7 @@ const AIChatDeepSeek = () => {
    
     
     // Function to POST data to the API
-    const postData = async (event) => {
+    const postData = async () => {
 
       const userMessage = { role: "user", content: ChatMessage };
       setTotalMessage((prev) => [...prev, userMessage]);
@@ -71,8 +66,6 @@ const AIChatDeepSeek = () => {
         );
   
         const aiMessage = response.data.choices[0].message;
-        console.log(aiMessage["content"])
-        setAi_Reply(aiMessage["content"])
         ChatLogs.push({
           id: ChatLogs.length+1 ,
           date:"2024-12-12",
@@ -87,10 +80,7 @@ const AIChatDeepSeek = () => {
           ...prev,
           { role: "assistant", content: "Sorry, an error occurred!" },
         ]);
-      } finally {
-        
-       
-      }
+      } 
     
     };
   
@@ -98,7 +88,7 @@ const AIChatDeepSeek = () => {
     const HandleSubmit = (event) => {
       //if(event.key == "Enter"){
      // console.log(today(getLocalTimeZone()));}
-     if((event.key == "Enter") || (event.button === 0)){
+     if((event.key == "Enter") || (event.button === 0) && ChatMessage !=""){
      ChatLogs.push({
       id: ChatLogs.length+1 ,
       date:"2024-12-12",

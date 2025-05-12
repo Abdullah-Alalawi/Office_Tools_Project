@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import React, { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Translator from './Pages/Translator';
 import AIChatGPT from './Pages/GPTChatBot';
 import AIChatDeepSeek from './Pages/DeepSeekChatBot';

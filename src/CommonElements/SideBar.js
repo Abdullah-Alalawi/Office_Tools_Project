@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@nextui-org/react";
+import { Button} from "@nextui-org/react";
 import { useNavigate, useLocation } from "react-router-dom";
-import profileImage from "../assets/default-avatar.jpg";
-import { IoMdArrowDropdown } from "react-icons/io";
-import { TfiRulerPencil } from "react-icons/tfi";
-import { MdConstruction } from "react-icons/md";
 import { FaFeatherAlt } from "react-icons/fa";
 
-const SideBar = ({ buttons, userName, userType }) => {
+const SideBar = ({ buttons}) => {
   const [selectedButton, setSelectedButton] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const API_URL = "https://2ty7j7stad.execute-api.eu-north-1.amazonaws.com/Senior_Project/Auth"
   
 
 

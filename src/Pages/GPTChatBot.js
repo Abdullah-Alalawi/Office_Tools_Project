@@ -1,4 +1,4 @@
-import React, { useState,useEffect} from "react";
+import React, { useState} from "react";
 import MainLayout from "../CommonElements/MainLayout";
 import {  Button, Card,CardBody,CardFooter,Input,Spacer, Textarea, Avatar} from "@nextui-org/react";
 import { MdOutlineTranslate } from "react-icons/md";
@@ -6,8 +6,6 @@ import { IoChatbubbles } from "react-icons/io5";
 import { IoSend } from "react-icons/io5";
 import { LuBookOpenCheck } from "react-icons/lu";
 import OpenAI from 'openai';
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
 
 
 
@@ -18,11 +16,6 @@ const ChatLogs = [
 
 ];
 
-const statusColorMap = {
-  Confirmed: "success",
-  Pending: "warning",
-  Cancelled: "danger",
-};
 
 const AIChat = () => {
   const sidebarButtons = [
@@ -37,8 +30,6 @@ const AIChat = () => {
     
     
     const [ChatMessage , setChatMessage] = useState("");
-    const [Ai_Reply  , setAi_Reply]= useState("");
-    const Navigate = useNavigate();
   
 
 
@@ -47,12 +38,6 @@ const AIChat = () => {
     const postData = async (event) => {
       if((event.key == "Enter") || (event.button === 0)){
       try {
-        const payload ={ 
-          "Prompt" : ChatMessage
-        }      
-        
-
-
         const openai = new OpenAI({
           apiKey: process.env.REACT_APP_GPT_API_KEY,
           dangerouslyAllowBrowser: true 
@@ -66,7 +51,7 @@ const AIChat = () => {
       
         const AI_Response = chatCompletion.choices[0].message.content
 
-        setAi_Reply(AI_Response);
+
         ChatLogs.push({
           id: ChatLogs.length+1 ,
           date:"2024-12-12",
