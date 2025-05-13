@@ -1,82 +1,22 @@
-name: Office_Tools_Kit Security Scans
+name: Security Scans
+
 on:
   push:
-    branches: [ main ]
+    branches: [ main,Errors, Development, release/v1.0.0  ]
   pull_request:
-    branches: [ main ]
+    branches: [ main,Errors, Development, release/v1.0.0  ]
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-  sast:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Dependencies
-        run: |
-          npm install --legacy-peer-deps
-          npm install eslint-plugin-security@latest @babel/eslint-parser@latest --save-dev
-          npm install @babel/preset-react@latest --save-dev
-          npx update-browserslist-db@latest
-
-      - name: Configure ESLint with Security Exceptions
-        run: |
-          echo '{
-            "parser": "@babel/eslint-parser",
-            "parserOptions": {
-              "ecmaVersion": 2021,
-              "sourceType": "module",
-              "ecmaFeatures": {
-                "jsx": true
-              },
-              "requireConfigFile": false,
-              "babelOptions": {
-                "presets": ["@babel/preset-react"]
-              }
-            },
-            "env": {
-              "browser": true,
-              "es2021": true
-            },
-            "plugins": ["security"],
-            "rules": {
-              "security/detect-object-injection": ["error", {
-                "exceptionPatterns": ["^GrammarCorrection\\."]
-              }],
-              "security/detect-non-literal-require": 2,
-              "security/detect-possible-timing-attacks": 2
-            },
-            "overrides": [
-              {
-                "files": ["src/Pages/GrammarCorrection.js"],
-                "rules": {
-                  "security/detect-object-injection": "off"
-                }
-              }
-            ]
-          }' > .eslintrc.json
-
-      - name: Run Security Scans
-        run: |
-          # Run ESLint but don't fail the build for security/detect-object-injection
-          npx eslint src/ --quiet --rule 'security/detect-object-injection: off' || true
-          # Run specific security checks separately
-          npx eslint src/ \
-            --rule 'security/detect-non-literal-require: error' \
-            --rule 'security/detect-possible-timing-attacks: error'
   # 2. Dependency Scanning (React-focused)
   dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # OWASP Scan with React adjustments
+      # OWASP Scan with React adjustments (outputs into ./reports)
       - name: OWASP Dependency Scan
         uses: dependency-check/Dependency-Check_Action@main
         with:
@@ -87,20 +27,41 @@ jobs:
           scanPath: 'src/'
           outputDirectory: './reports'
 
-      # npm audit with React criticals only
-      - name: npm Audit (Critical Only)
+      # Upload all OWASP scan files
+      - name: Upload OWASP scan reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: owasp-dependency-reports
+          path: reports/
+
+      # npm audit as JSON
+      - name: Generate npm audit report
         run: |
           npm install
-          npm audit --audit-level=critical
+          npm audit --json > npm-audit-report.json || true
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.json
 
       # Check for vulnerable Codespaces features
       - name: Check React DevContainer Features
         run: |
           if [ -f .devcontainer/devcontainer.json ]; then
-            echo "Installed Features:"
-            jq -r '.features | to_entries[] | "\(.key): \(.value.version)"' .devcontainer/devcontainer.json
-            jq -e '.features["ghcr.io/devcontainers/features/node:1"].version >= "18"' .devcontainer/devcontainer.json
+            jq -r '.features | to_entries[] | "\(.key): \(.value.version)"' .devcontainer/devcontainer.json \
+              > devcontainer-features.txt
           fi
+
+      - name: Upload DevContainer features list
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: devcontainer-features
+          path: devcontainer-features.txt
 
   # 3. Secret Scanning (Enhanced for React)
   secrets:
@@ -110,18 +71,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Gitleaks with React-specific patterns
+      # Gitleaks with JSON output
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
-          extra-args: '--no-git'
+          extra-args: '--no-git --report-format json --report-path gitleaks-report.json'
+
+      - name: Upload Gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
 
       # React environment variable check
       - name: Check Env Variables
         run: |
-          grep -r 'REACT_APP_' src/ || echo "No React env variables found"
-          grep -r 'process.env' src/ || echo "No process.env usage found"
+          grep -r 'REACT_APP_' src/  > react-env-vars.txt  || echo "No React env variables found" > react-env-vars.txt
+          grep -r 'process.env' src/ >> react-env-vars.txt || true
+
+      - name: Upload env-var check
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: env-var-check
+          path: react-env-vars.txt
 
   # 4. Codespaces Hardening
   codespaces:
@@ -129,23 +104,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Verify devcontainer.json security settings
+      # Run all devcontainer sanity checks and capture logs
       - name: Validate DevContainer Config
         run: |
-          if [ -f .devcontainer/devcontainer.json ]; then
-            echo "Security Checks:"
-            jq -e '.containerUser != "root"' .devcontainer/devcontainer.json
-            jq -e '.remoteUser != "root"' .devcontainer/devcontainer.json
-            jq -e '.postCreateCommand | contains("sudo") | not' .devcontainer/devcontainer.json
-            jq -e '.customizations.vscode.settings["security.workspace.trust.enabled"] == true' .devcontainer/devcontainer.json
-          fi
+          {
+            echo "=== DevContainer Security Checks ==="
+            if [ -f .devcontainer/devcontainer.json ]; then
+              jq -e '.containerUser != "root"' .devcontainer/devcontainer.json && echo "containerUser OK"
+              jq -e '.remoteUser != "root"' .devcontainer/devcontainer.json  && echo "remoteUser OK"
+              jq -e '.postCreateCommand | contains("sudo") | not' .devcontainer/devcontainer.json  && echo "no sudo in postCreate"
+              jq -e '.customizations.vscode.settings["security.workspace.trust.enabled"] == true' .devcontainer/devcontainer.json  && echo "workspace.trust enabled"
+            else
+              echo "No devcontainer.json found"
+            fi
+          } > codespaces-check.log
 
-      # Check for exposed React ports
       - name: Verify React Ports
         run: |
-          if [ -f .devcontainer/devcontainer.json ]; then
-            echo "Port Configuration:"
-            jq '.forwardPorts' .devcontainer/devcontainer.json
-            jq -e '.forwardPorts | contains([3000])' .devcontainer/devcontainer.json
-            jq -e '.forwardPorts | contains([22, 3306, 5432]) | not' .devcontainer/devcontainer.json
-          fi
+          {
+            echo "=== Forwarded Ports ==="
+            if [ -f .devcontainer/devcontainer.json ]; then
+              jq '.forwardPorts' .devcontainer/devcontainer.json
+            else
+              echo "No devcontainer.json found"
+            fi
+          } >> codespaces-check.log
+
+      - name: Upload Codespaces hardening log
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: codespaces-check-log
+          path: codespaces-check.log

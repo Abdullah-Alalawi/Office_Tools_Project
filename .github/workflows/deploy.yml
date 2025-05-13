@@ -1,7 +1,7 @@
 name: Deploy to Render
 on:
   push:
-    branches: [main, release/*]
+    branches: [main, release/v1.0.0]
   workflow_dispatch:  # Manual trigger
 
 jobs:
@@ -34,9 +34,7 @@ jobs:
           render-token: ${{ secrets.RENDER_TOKEN }}
           service-id: ${{ 
             contains(github.ref, 'release/') 
-            && secrets.RENDER_PRODUCTION_SERVICE_ID 
-            || secrets.RENDER_STAGING_SERVICE_ID 
-          }}
+            && secrets.RENDER_PRODUCTION_SERVICE_ID || secrets.RENDER_STAGING_SERVICE_ID  }}
           environment-vars: |
             # Existing vars
             REACT_APP_DEEPSEEK_API_KEY=${{ secrets.REACT_APP_DEEPSEEK_API_KEY }}
