@@ -2,9 +2,9 @@ name: Security Scans
 
 on:
   push:
-    branches: [ main,Errors, Development, release/v1.0.0  ]
+    branches: [ main, Errors, Development, release/v1.0.0 ]
   pull_request:
-    branches: [ main,Errors, Development, release/v1.0.0  ]
+    branches: [ main, Errors, Development, release/v1.0.0 ]
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
@@ -30,7 +30,7 @@ jobs:
       # Upload all OWASP scan files
       - name: Upload OWASP scan reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: owasp-dependency-reports
           path: reports/
@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload npm audit report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: npm-audit-report
           path: npm-audit-report.json
@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload DevContainer features list
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: devcontainer-features
           path: devcontainer-features.txt
@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload Gitleaks report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: gitleaks-report
           path: gitleaks-report.json
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload env-var check
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: env-var-check
           path: react-env-vars.txt
@@ -132,7 +132,7 @@ jobs:
 
       - name: Upload Codespaces hardening log
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: codespaces-check-log
           path: codespaces-check.log
