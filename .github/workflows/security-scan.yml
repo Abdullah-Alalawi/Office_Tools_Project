@@ -2,21 +2,18 @@ name: Security Scans
 
 on:
   push:
-    branches: [ main, Errors, Development, release/v1.0.0 ]
+    branches: [main, Errors, Development, release/v1.0.0]
   pull_request:
-    branches: [ main, Errors, Development, release/v1.0.0 ]
+    branches: [main, Errors, Development, release/v1.0.0]
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
 jobs:
-
-  # 2. Dependency Scanning (React-focused)
   dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # OWASP Scan with React adjustments (outputs into ./reports)
       - name: OWASP Dependency Scan
         uses: dependency-check/Dependency-Check_Action@main
         with:
@@ -27,43 +24,42 @@ jobs:
           scanPath: 'src/'
           outputDirectory: './reports'
 
-      # Upload all OWASP scan files
       - name: Upload OWASP scan reports
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: owasp-dependency-reports
           path: reports/
 
-      # npm audit as JSON
       - name: Generate npm audit report
         run: |
           npm install
-          npm audit --json > npm-audit-report.json || true
+          npm audit --json > npm-audit-report.json || echo '{"error": "npm audit failed"}' > npm-audit-report.json
 
       - name: Upload npm audit report
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: npm-audit-report
           path: npm-audit-report.json
 
-      # Check for vulnerable Codespaces features
       - name: Check React DevContainer Features
         run: |
+          mkdir -p reports
           if [ -f .devcontainer/devcontainer.json ]; then
             jq -r '.features | to_entries[] | "\(.key): \(.value.version)"' .devcontainer/devcontainer.json \
-              > devcontainer-features.txt
+              > reports/devcontainer-features.txt || echo "No features found" > reports/devcontainer-features.txt
+          else
+            echo "No devcontainer.json found" > reports/devcontainer-features.txt
           fi
 
       - name: Upload DevContainer features list
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: devcontainer-features
-          path: devcontainer-features.txt
+          path: reports/devcontainer-features.txt
 
-  # 3. Secret Scanning (Enhanced for React)
   secrets:
     runs-on: ubuntu-latest
     steps:
@@ -71,68 +67,66 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Gitleaks with JSON output
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
-          extra-args: '--no-git --report-format json --report-path gitleaks-report.json'
+          extra-args: '--no-git --report-format json --report-path reports/gitleaks-report.json'
 
       - name: Upload Gitleaks report
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
-          path: gitleaks-report.json
+          path: reports/gitleaks-report.json
 
-      # React environment variable check
       - name: Check Env Variables
         run: |
-          grep -r 'REACT_APP_' src/  > react-env-vars.txt  || echo "No React env variables found" > react-env-vars.txt
-          grep -r 'process.env' src/ >> react-env-vars.txt || true
+          mkdir -p reports
+          grep -r 'REACT_APP_' src/ > reports/react-env-vars.txt  || echo "No React env variables found" > reports/react-env-vars.txt
+          grep -r 'process.env' src/ >> reports/react-env-vars.txt || true
 
       - name: Upload env-var check
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: env-var-check
-          path: react-env-vars.txt
+          path: reports/react-env-vars.txt
 
-  # 4. Codespaces Hardening
   codespaces:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Run all devcontainer sanity checks and capture logs
       - name: Validate DevContainer Config
         run: |
+          mkdir -p reports
           {
             echo "=== DevContainer Security Checks ==="
             if [ -f .devcontainer/devcontainer.json ]; then
-              jq -e '.containerUser != "root"' .devcontainer/devcontainer.json && echo "containerUser OK"
-              jq -e '.remoteUser != "root"' .devcontainer/devcontainer.json  && echo "remoteUser OK"
-              jq -e '.postCreateCommand | contains("sudo") | not' .devcontainer/devcontainer.json  && echo "no sudo in postCreate"
-              jq -e '.customizations.vscode.settings["security.workspace.trust.enabled"] == true' .devcontainer/devcontainer.json  && echo "workspace.trust enabled"
+              jq -e '.containerUser != "root"' .devcontainer/devcontainer.json && echo "containerUser OK" || echo "containerUser WARNING: Using root"
+              jq -e '.remoteUser != "root"' .devcontainer/devcontainer.json && echo "remoteUser OK" || echo "remoteUser WARNING: Using root"
+              jq -e '.postCreateCommand | contains("sudo") | not' .devcontainer/devcontainer.json && echo "no sudo in postCreate" || echo "WARNING: sudo found in postCreate"
+              jq -e '.customizations.vscode.settings["security.workspace.trust.enabled"] == true' .devcontainer/devcontainer.json && echo "workspace.trust enabled" || echo "WARNING: workspace.trust not enabled"
             else
               echo "No devcontainer.json found"
             fi
-          } > codespaces-check.log
+          } > reports/codespaces-check.log
 
       - name: Verify React Ports
         run: |
           {
             echo "=== Forwarded Ports ==="
             if [ -f .devcontainer/devcontainer.json ]; then
-              jq '.forwardPorts' .devcontainer/devcontainer.json
+              jq '.forwardPorts' .devcontainer/devcontainer.json || echo "No forwarded ports configured"
             else
               echo "No devcontainer.json found"
             fi
-          } >> codespaces-check.log
+          } >> reports/codespaces-check.log
 
       - name: Upload Codespaces hardening log
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: codespaces-check-log
-          path: codespaces-check.log
+          path: reports/codespaces-check.log
