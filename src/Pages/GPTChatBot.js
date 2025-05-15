@@ -1,16 +1,11 @@
-import React, { useState,useEffect} from "react";
+import React, { useState} from "react";
 import MainLayout from "../CommonElements/MainLayout";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Button, Tooltip ,  Card,
-    CardBody,CardFooter,Input,Spacer, ScrollShadow, Textarea, Avatar} from "@nextui-org/react";
-
-import { PiArrowsLeftRightBold } from "react-icons/pi";
+import {  Button, Card,CardBody,CardFooter,Input,Spacer, Textarea, Avatar} from "@nextui-org/react";
 import { MdOutlineTranslate } from "react-icons/md";
 import { IoChatbubbles } from "react-icons/io5";
 import { IoSend } from "react-icons/io5";
 import { LuBookOpenCheck } from "react-icons/lu";
 import OpenAI from 'openai';
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
 
 
 
@@ -21,11 +16,6 @@ const ChatLogs = [
 
 ];
 
-const statusColorMap = {
-  Confirmed: "success",
-  Pending: "warning",
-  Cancelled: "danger",
-};
 
 const AIChat = () => {
   const sidebarButtons = [
@@ -40,60 +30,18 @@ const AIChat = () => {
     
     
     const [ChatMessage , setChatMessage] = useState("");
-    const [Ai_Reply  , setAi_Reply]= useState("");
-    const [Name , setName] = useState("");
-    const [Major , setMajor] = useState("");
-    const Navigate = useNavigate();
   
-  
-    useEffect(() => {
-      const Token = !localStorage.getItem("Token")? localStorage.getItem("Token"): jwtDecode(localStorage.getItem("Token"));
-      const Name = localStorage.getItem("Name")
-      const Major = localStorage.getItem("Major")
-      const currentTime = Math.floor(Date.now() / 1000);
-      
-      if ((!Token & !Name & !Major) || (Token.exp<=currentTime)  ) {
-        localStorage.setItem("Token", "");
-        localStorage.setItem("Email", "");
-        localStorage.setItem("Name", "");
-        localStorage.setItem("Major", "");
-        Navigate("/LOGIN");
-      }
-      else {
-        setName(Name)
-        setMajor(Major)
-        
-      }
-    }, []);
 
 
-
-    const API_URL = "https://zhehrlhsxh.execute-api.eu-north-1.amazonaws.com/COE452_proj/ChatBot";
     
     // Function to POST data to the API
     const postData = async (event) => {
       if((event.key == "Enter") || (event.button === 0)){
       try {
-        const payload ={ 
-          "Prompt" : ChatMessage
-        }      
-        
-
-
         const openai = new OpenAI({
-          apiKey: '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' ,
+          apiKey: process.env.REACT_APP_GPT_API_KEY,
           dangerouslyAllowBrowser: true 
         });
-
-
-        /*const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-  
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }*/
 
         const chatCompletion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
@@ -103,9 +51,7 @@ const AIChat = () => {
       
         const AI_Response = chatCompletion.choices[0].message.content
 
-        /*const result = await response.json();
-        const temp = JSON.parse(result['body']);*/
-        setAi_Reply(AI_Response);
+
         ChatLogs.push({
           id: ChatLogs.length+1 ,
           date:"2024-12-12",
@@ -125,8 +71,6 @@ const AIChat = () => {
   
 
     const HandleSubmit = (event) => {
-      //if(event.key == "Enter"){
-     // console.log(today(getLocalTimeZone()));}
      if(event.key == "Enter"){
      ChatLogs.push({
       id: ChatLogs.length+1 ,
@@ -134,12 +78,10 @@ const AIChat = () => {
       time:"9:30 AM",
       Message:ChatMessage,
       user:"Human"});
-      
-
+    
       postData(event);
 
       setChatMessage("");
-      //ttomRef.current?.scrollIntoView({ behavior: "smooth" });
      }
 
 
@@ -199,7 +141,7 @@ const AIChat = () => {
 
 
   return (
-    <MainLayout title="AI Chat Bot" sidebarButtons={sidebarButtons} userName={Name} userType={Major}>
+    <MainLayout title="AI Chat Bot" sidebarButtons={sidebarButtons} userName="" userType="">
       <div id="Conv" className="p-4 justify-items-stretch " >
         <h1 className="text-2xl font-bold mb-4">Your AI ChatBot</h1>
         <Card className=" lg:size-full  " >

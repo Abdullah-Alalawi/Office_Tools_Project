@@ -1,0 +1,54 @@
+name: Deploy to Render
+on:
+  push:
+    branches: [main, release/*]
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ contains(github.ref, 'release/') && 'production' || 'staging' }}
+      url: ${{ steps.deploy.outputs.render-url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+        env:
+          CI: false
+
+      - name: Deploy to Render
+        id: deploy
+        uses: render-actions/deploy@v1
+        with:
+          render-token: ${{ secrets.RENDER_TOKEN }}
+          service-id: ${{ 
+            contains(github.ref, 'release/') 
+            && secrets.RENDER_PRODUCTION_SERVICE_ID 
+            || secrets.RENDER_STAGING_SERVICE_ID 
+          }}
+          environment-vars: |
+            # Existing vars
+            REACT_APP_DEEPSEEK_API_KEY=${{ secrets.REACT_APP_DEEPSEEK_API_KEY }}
+            REACT_APP_GPT_API_KEY=${{ secrets.REACT_APP_GPT_API_KEY }}
+            
+            # New AWS vars
+            REACT_APP_AWS_KEY_ID=${{ secrets.REACT_APP_AWS_KEY_ID }}
+            REACT_APP_AWS_ACCESS_KEY=${{ secrets.REACT_APP_AWS_ACCESS_KEY }}
+            REACT_APP_AWS_REGION=${{ secrets.REACT_APP_AWS_REGION }}
+            
+            # LanguageTool
+            REACT_APP_LANGUAGETOOL_API_URL=${{ secrets.REACT_APP_LANGUAGETOOL_API_URL }}
+            
+            # Environment type
+            NODE_ENV=${{ contains(github.ref, 'release/') && 'production' || 'staging' }}

@@ -1,15 +1,13 @@
-import React, { useState ,useRef ,useEffect} from "react";
+import React, { useState } from "react";
 import MainLayout from "../CommonElements/MainLayout";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Button, Tooltip ,  Card,
-    CardBody,CardFooter,Input,Spacer, ScrollShadow, Textarea, Avatar} from "@nextui-org/react";
-import { PiArrowsLeftRightBold } from "react-icons/pi";
+import { Button ,  Card,CardBody,CardFooter,Input,Spacer, Textarea, Avatar} from "@nextui-org/react";
 import { MdOutlineTranslate } from "react-icons/md";
 import { IoChatbubbles } from "react-icons/io5";
 import { IoSend } from "react-icons/io5";
 import { LuBookOpenCheck } from "react-icons/lu";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+
+
 
 
 
@@ -19,11 +17,7 @@ const ChatLogs = [
 
 ];
 
-const statusColorMap = {
-  Confirmed: "success",
-  Pending: "warning",
-  Cancelled: "danger",
-};
+
 
 const AIChatDeepSeek = () => {
   const sidebarButtons = [
@@ -38,40 +32,18 @@ const AIChatDeepSeek = () => {
     
     const [TotalMessage , setTotalMessage] = useState([]);
     const [ChatMessage , setChatMessage] = useState("");
-    const [Ai_Reply  , setAi_Reply]= useState("");
    //onst bottomRef = useRef<HTMLDivElement>(document.getElementById("Conv"));
-   const [Name , setName] = useState("");
-   const [Major , setMajor] = useState("");
-   const Navigate = useNavigate();
- 
- 
-   useEffect(() => {
-     const Token = !localStorage.getItem("Token")? localStorage.getItem("Token"): jwtDecode(localStorage.getItem("Token"));
-     const Name = localStorage.getItem("Name")
-     const Major = localStorage.getItem("Major")
-     const currentTime = Math.floor(Date.now() / 1000);
-     
-     if ((!Token & !Name & !Major) || (Token.exp<=currentTime)  ) {
-       localStorage.setItem("Token", "");
-       localStorage.setItem("Email", "");
-       localStorage.setItem("Name", "");
-       localStorage.setItem("Major", "");
-       Navigate("/LOGIN");
-     }
-     else {
-       setName(Name)
-       setMajor(Major)
-       
-     }
-   }, []);
 
 
 
-   const DEEPSEEK_API_KEY = "sk-50187b6633b747619a23afc19d8a562f";  // Get it from https://platform.deepseek.com/
-   const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+
+
+   const DEEPSEEK_API_KEY = process.env.REACT_APP_DEEPSEEK_API_KEY;
+   const DEEPSEEK_API_URL = process.env.REACT_APP_DEEPSEEK_API_URL;
+   
     
     // Function to POST data to the API
-    const postData = async (event) => {
+    const postData = async () => {
 
       const userMessage = { role: "user", content: ChatMessage };
       setTotalMessage((prev) => [...prev, userMessage]);
@@ -94,8 +66,6 @@ const AIChatDeepSeek = () => {
         );
   
         const aiMessage = response.data.choices[0].message;
-        console.log(aiMessage["content"])
-        setAi_Reply(aiMessage["content"])
         ChatLogs.push({
           id: ChatLogs.length+1 ,
           date:"2024-12-12",
@@ -110,10 +80,7 @@ const AIChatDeepSeek = () => {
           ...prev,
           { role: "assistant", content: "Sorry, an error occurred!" },
         ]);
-      } finally {
-        
-       
-      }
+      } 
     
     };
   
@@ -121,7 +88,7 @@ const AIChatDeepSeek = () => {
     const HandleSubmit = (event) => {
       //if(event.key == "Enter"){
      // console.log(today(getLocalTimeZone()));}
-     if((event.key == "Enter") || (event.button === 0)){
+     if((event.key == "Enter") || (event.button === 0) && ChatMessage !=""){
      ChatLogs.push({
       id: ChatLogs.length+1 ,
       date:"2024-12-12",
@@ -193,7 +160,7 @@ const AIChatDeepSeek = () => {
 
 
   return (
-    <MainLayout title="AI Chat Bot" sidebarButtons={sidebarButtons} userName={Name} userType={Major}>
+    <MainLayout title="AI Chat Bot" sidebarButtons={sidebarButtons} userName="" userType="">
       <div id="Conv" className="p-4 justify-items-stretch " >
         <h1 className="text-2xl font-bold mb-4">Your AI ChatBot</h1>
         <Card className=" lg:size-full  " >

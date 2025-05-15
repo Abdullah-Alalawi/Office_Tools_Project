@@ -1,0 +1,30 @@
+{
+  "name": "Render-Style React App",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "forwardPorts": [80],
+  "postCreateCommand": "echo 'Container ready – the app will build on first start.'",
+  "runArgs": [
+    // bypass default override so that CMD ["nginx", …] runs
+    "--entrypoint=" 
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "dsznajder.es7-react-js-snippets",
+        "christian-kohler.path-intellisense",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "javascript.updateImportsOnFileMove.enabled": "always"
+      }
+    }
+  }
+}
