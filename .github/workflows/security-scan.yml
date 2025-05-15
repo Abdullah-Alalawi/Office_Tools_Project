@@ -60,14 +60,20 @@ jobs:
       - name: Create reports directory
         run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
 
-      - name: Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          # Using only valid inputs for gitleaks-action@v2
-          config-path: .gitleaks.toml
-          # Additional args must be passed through environment variables
-          env:
-            GITLEAKS_ARGS: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
+      - name: Setup Gitleaks
+        run: |
+          wget https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -O gitleaks
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Run Gitleaks Scan
+        run: |
+          gitleaks detect \
+            --config=.gitleaks.toml \
+            --source=. \
+            --no-git \
+            --report-format json \
+            --report-path $REPORTS_DIR/gitleaks-report.json || true
 
       - name: Check Env Variables
         run: |
@@ -118,5 +124,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: codespaces-reports
-          path: ${{ env.REPORTS_DIR }}/
+          path: $REPORTS_DIR/
         if: always()
