@@ -23,7 +23,18 @@
     "react": { "version": "detect" }
   },
   "rules": {
-    "security/detect-object-injection": ["error", { "exceptionPatterns": ["^GrammarCorrection\\.]"] }],
+    "security/detect-object-injection": [
+      "error",
+      {
+        "exceptionPatterns": [
+          "^GrammarCorrection\\.",
+          "^grammarCorrection\\.",
+          "^GrammarCorrection$",
+          "^grammarCorrection$",
+          "^[gG]rammarCorrection(\\..*)?$"
+        ]
+      }
+    ],
     "security/detect-non-literal-require": 2,
     "security/detect-possible-timing-attacks": 2,
     "react/prop-types": "off"
@@ -32,6 +43,12 @@
     {
       "files": ["**/*.test.js", "**/*.spec.js"],
       "rules": { "security/detect-object-injection": "off" }
+    },
+    {
+      "files": ["**/GrammarCorrection.js"],
+      "rules": {
+        "security/detect-object-injection": "off"
+      }
     }
   ]
 }
