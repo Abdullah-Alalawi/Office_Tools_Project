@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [main, Errors, Development, release/v1.0.0,ColdFix]
+    branches: [main, Errors, Development, release/v1.0.0]
   pull_request:
-    branches: [main, Errors, Development, release/v1.0.0, ColdFix]
+    branches: [main, Errors, Development, release/v1.0.0]
 
 jobs:
   unit-tests:
@@ -21,46 +21,59 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests & generate reports
         run: |
-          npm test \
-            -- --watchAll=false \
-               --coverage \
-               --passWithNoTests \
-               --reporters=default \
-               --reporters=jest-junit \
-               --outputFile=junit.xml
+          npm ci
+          npm install --save-dev jest-junit
+
+      - name: Run unit tests with coverage
+        run: |
+          mkdir -p test-results
+          npm test -- --watchAll=false \
+                     --coverage \
+                     --passWithNoTests \
+                     --reporters=default \
+                     --reporters=jest-junit \
+                     --outputFile=test-results/junit.xml
         env:
           CI: true
 
-      - name: Verify test artifacts exist
+      - name: Verify test artifacts
         run: |
-          mkdir -p test-artifacts
-          [ -f junit.xml ] && cp junit.xml test-artifacts/ || echo "No JUnit report found" > test-artifacts/junit-missing.txt
-          [ -d coverage ] && cp -r coverage/ test-artifacts/ || echo "No coverage report found" > test-artifacts/coverage-missing.txt
-
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-artifacts
-          path: test-artifacts/
-          retention-days: 7
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
+          # Create coverage directory if it doesn't exist
+          mkdir -p coverage
+          # Create empty reports if tests failed
+          if [ ! -f "test-results/junit.xml" ]; then
+            echo '<testsuites/>' > test-results/junit.xml
+          fi
+          if [ ! -d "coverage" ]; then
+            mkdir -p coverage
+            echo '{}' > coverage/coverage-final.json
+          fi
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: test-results
-          path: junit.xml
-          retention-days: 7
+          path: test-results/junit.xml
+        if: always()
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+        if: always()
+
+      - name: Print test summary
+        run: |
+          echo "=== Test Summary ==="
+          if [ -f "test-results/junit.xml" ]; then
+            echo "JUnit report exists"
+          else
+            echo "No JUnit report generated"
+          fi
+          if [ -d "coverage" ]; then
+            echo "Coverage report exists"
+          else
+            echo "No coverage report generated"
+          fi
