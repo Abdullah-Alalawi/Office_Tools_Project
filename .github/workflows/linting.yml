@@ -84,16 +84,18 @@ jobs:
             echo "Warning: src directory not found - created empty report"
           fi
 
-      - name: List generated files (debug)
+      - name: Verify report exists before upload
         run: |
-          echo "Generated files:"
-          ls -la ./eslint-reports/
-          echo "Report content:"
-          cat ./eslint-reports/eslint-report.json || echo "No report file found"
+          if [ ! -f "./eslint-reports/eslint-report.json" ]; then
+            echo '[]' > ./eslint-reports/eslint-report.json
+            echo "Created empty report file as fallback"
+          fi
+          echo "Report file content:"
+          cat ./eslint-reports/eslint-report.json
 
       - name: Upload ESLint report
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: eslint-security-report
-          path: ./Pages/test-reports
+          path: ./eslint-reports/eslint-report.json
+        if: always()
