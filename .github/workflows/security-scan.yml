@@ -21,7 +21,7 @@ jobs:
         run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
 
       - name: OWASP Dependency Scan
-        uses: dependency-check/Dependency-Check_Action@v3.1.0
+        uses: dependency-check/Dependency-Check_Action@v3
         with:
           project: 'Office_Tools_Kit'
           path: 'src/'
@@ -63,8 +63,11 @@ jobs:
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         with:
+          # Using only valid inputs for gitleaks-action@v2
           config-path: .gitleaks.toml
-          args: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
+          # Additional args must be passed through environment variables
+          env:
+            GITLEAKS_ARGS: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
 
       - name: Check Env Variables
         run: |
