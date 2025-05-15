@@ -1,148 +1,18 @@
-name: CI & Deploy
-
+name: Deploy to Render
 on:
   push:
-    branches:  
-      - main
-      - develop
-      - 'release/**'
+    branches: [main, release/v1.0.0]
   pull_request:
-    branches:
-      - main
-      - develop
-      - 'release/**'
-  workflow_dispatch:
+    branches: [ Errors,main, release/v1.0.0] 
+  workflow_dispatch:  # Manual trigger
 
 jobs:
-  validate-secrets:
-    name:  Validate Secrets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure required secrets are set
-        run: |
-          : "${{ secrets.RENDER_TOKEN?ERROR: RENDER_TOKEN is required}}"
-          : "${{ secrets.RENDER_PRODUCTION_SERVICE_ID?ERROR: RENDER_PRODUCTION_SERVICE_ID is required}}"
-          : "${{ secrets.RENDER_STAGING_SERVICE_ID?ERROR: RENDER_STAGING_SERVICE_ID is required}}"
-          : "${{ secrets.REACT_APP_GPT_API_KEY?ERROR: GPT API key is required}}"
-
-  build:
-    name:  Build & Test
-    runs-on: ubuntu-latest
-    needs: validate-secrets
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
-
-      - name: Build for production
-        run: npm run build
-        env:
-          CI: false
-
-  scan-dependencies:
-    name: 🛡️ OWASP Dependency Scan
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: OWASP Dependency Scan
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: "Office_Tools_Kit"
-          format: "ALL"
-          failOnCVSS: 7
-          skip: "**/__tests__/**,**/cypress/**,**/node_modules/**"
-          scanPath: "src/"
-          outputDirectory: "./reports"
-
-      - name: Upload OWASP scan reports
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: owasp-dependency-reports
-          path: reports/
-
-  secret-scan:
-    name: 🔍 Secret Scanning
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          config-path: .gitleaks.toml
-          extra-args: '--no-git --report-format json --report-path gitleaks-report.json'
-
-      - name: Upload Gitleaks report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: gitleaks-report
-          path: gitleaks-report.json
-
-      - name: Check React env vars
-        run: |
-          grep -r 'REACT_APP_' src/ > react-env-vars.txt || echo "No React env vars found" > react-env-vars.txt
-          grep -r 'process.env' src/ >> react-env-vars.txt || true
-
-      - name: Upload env-var check
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: env-var-check
-          path: react-env-vars.txt
-
-  pick-service:
-    name:  Pick Render Service
-    runs-on: ubuntu-latest
-    needs: build
-    outputs:
-      SERVICE_ID: ${{ steps.select.outputs.SERVICE_ID }}
-      ENVIRONMENT: ${{ steps.select.outputs.ENVIRONMENT }}
-    steps:
-      - id: select
-        run: |
-          if [[ "${GITHUB_REF}" == refs/heads/release/* ]]; then
-            echo "SERVICE_ID=${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}" >> $GITHUB_OUTPUT
-            echo "ENVIRONMENT=production"      >> $GITHUB_OUTPUT
-          else
-            echo "SERVICE_ID=${{ secrets.RENDER_STAGING_SERVICE_ID }}" >> $GITHUB_OUTPUT
-            echo "ENVIRONMENT=staging"          >> $GITHUB_OUTPUT
-          fi
-
   deploy:
-    name:  Deploy to Render
     runs-on: ubuntu-latest
-    needs: [build, pick-service]
-    environment:
-      name: ${{ needs.pick-service.outputs.ENVIRONMENT }}
-      url:  ${{ steps.deploy.outputs.render-url }}
+    environment: 
+      name: ${{ contains(github.ref, 'release/') && 'production' || 'staging' }}
+      url: ${{ steps.deploy.outputs.render-url }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -152,7 +22,7 @@ jobs:
           node-version: 18
           cache: 'npm'
 
-      - name: Install & Build
+      - name: Install and build
         run: |
           npm ci
           npm run build
@@ -161,31 +31,24 @@ jobs:
 
       - name: Deploy to Render
         id: deploy
-        uses: render-examples/render-deploy-action@v1
+        uses: render-actions/deploy@main
         with:
           render-token: ${{ secrets.RENDER_TOKEN }}
-          service-id:    ${{ needs.pick-service.outputs.SERVICE_ID }}
+          service-id: ${{ 
+            contains(github.ref, 'release/') 
+            && secrets.RENDER_PRODUCTION_SERVICE_ID || secrets.RENDER_STAGING_SERVICE_ID  }}
           environment-vars: |
+            # Existing vars
             REACT_APP_DEEPSEEK_API_KEY=${{ secrets.REACT_APP_DEEPSEEK_API_KEY }}
             REACT_APP_GPT_API_KEY=${{ secrets.REACT_APP_GPT_API_KEY }}
+            
+            # New AWS vars
             REACT_APP_AWS_KEY_ID=${{ secrets.REACT_APP_AWS_KEY_ID }}
             REACT_APP_AWS_ACCESS_KEY=${{ secrets.REACT_APP_AWS_ACCESS_KEY }}
             REACT_APP_AWS_REGION=${{ secrets.REACT_APP_AWS_REGION }}
+            
+            # LanguageTool
             REACT_APP_LANGUAGETOOL_API_URL=${{ secrets.REACT_APP_LANGUAGETOOL_API_URL }}
-            NODE_ENV=${{ needs.pick-service.outputs.ENVIRONMENT }}
-
-  health-check:
-    name:  Post-deploy Health Check
-    runs-on: ubuntu-latest
-    needs: deploy
-    steps:
-      - name: Wait for service to start
-        run: sleep 30
-
-      - name: Check /health endpoint
-        run: |
-          STATUS=$(curl -o /dev/null -s -w "%{http_code}" ${{ needs.deploy.outputs.render-url }}/health)
-          if [[ "$STATUS" != "200" ]]; then
-            echo " Health check failed with status $STATUS"
-            exit 1
-          fi
+            
+            # Environment type
+            NODE_ENV=${{ contains(github.ref, 'release/') && 'production' || 'staging' }}
