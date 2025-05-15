@@ -52,7 +52,8 @@ We follow a **Gitflow-based** workflow:
 
 ---
 
-![Uploading Flowcharts - Page 4 (2).png…]()
+![Flowcharts - Page 4 (3)](https://github.com/user-attachments/assets/43537e19-60ff-440e-bd5a-5fd19e3761dd)
+
 
 
 
