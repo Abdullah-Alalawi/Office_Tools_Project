@@ -1,18 +1,18 @@
 name: Deploy to Render
+
 on:
   push:
     branches: [main, release/v1.0.0]
   pull_request:
-    branches: [ Errors,main, release/v1.0.0] 
-  workflow_dispatch:  # Manual trigger
+    branches: [main, release/v1.0.0]  
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: 
       name: ${{ contains(github.ref, 'release/') && 'production' || 'staging' }}
-      url: ${{ steps.deploy.outputs.render-url }}
-
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -29,26 +29,39 @@ jobs:
         env:
           CI: false
 
-      - name: Deploy to Render
+      - name: Deploy to Render via API
         id: deploy
-        uses: render-actions/deploy@main
-        with:
-          render-token: ${{ secrets.RENDER_TOKEN }}
-          service-id: ${{ 
-            contains(github.ref, 'release/') 
-            && secrets.RENDER_PRODUCTION_SERVICE_ID || secrets.RENDER_STAGING_SERVICE_ID  }}
-          environment-vars: |
-            # Existing vars
-            REACT_APP_DEEPSEEK_API_KEY=${{ secrets.REACT_APP_DEEPSEEK_API_KEY }}
-            REACT_APP_GPT_API_KEY=${{ secrets.REACT_APP_GPT_API_KEY }}
-            
-            # New AWS vars
-            REACT_APP_AWS_KEY_ID=${{ secrets.REACT_APP_AWS_KEY_ID }}
-            REACT_APP_AWS_ACCESS_KEY=${{ secrets.REACT_APP_AWS_ACCESS_KEY }}
-            REACT_APP_AWS_REGION=${{ secrets.REACT_APP_AWS_REGION }}
-            
-            # LanguageTool
-            REACT_APP_LANGUAGETOOL_API_URL=${{ secrets.REACT_APP_LANGUAGETOOL_API_URL }}
-            
-            # Environment type
-            NODE_ENV=${{ contains(github.ref, 'release/') && 'production' || 'staging' }}
+        run: |
+          # Determine service ID based on branch
+          if [[ "${{ github.ref }}" == *"release/"* ]]; then
+            SERVICE_ID="${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}"
+          else
+            SERVICE_ID="${{ secrets.RENDER_STAGING_SERVICE_ID }}"
+          fi
+
+          # Create deployment
+          response=$(curl -s -X POST \
+            -H "Accept: application/json" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "clearCache": "do_not_clear",
+              "environmentVariables": {
+                "REACT_APP_DEEPSEEK_API_KEY": "${{ secrets.REACT_APP_DEEPSEEK_API_KEY }}",
+                "REACT_APP_GPT_API_KEY": "${{ secrets.REACT_APP_GPT_API_KEY }}",
+                "REACT_APP_AWS_KEY_ID": "${{ secrets.REACT_APP_AWS_KEY_ID }}",
+                "REACT_APP_AWS_ACCESS_KEY": "${{ secrets.REACT_APP_AWS_ACCESS_KEY }}",
+                "REACT_APP_AWS_REGION": "${{ secrets.REACT_APP_AWS_REGION }}",
+                "REACT_APP_LANGUAGETOOL_API_URL": "${{ secrets.REACT_APP_LANGUAGETOOL_API_URL }}",
+                "NODE_ENV": "${{ contains(github.ref, 'release/') && 'production' || 'staging' }}"
+              }
+            }' \
+            "https://api.render.com/v1/services/$SERVICE_ID/deploys")
+
+          # Extract deployment URL
+          deploy_url=$(echo "$response" | jq -r '.deploy.url')
+          echo "render-url=$deploy_url" >> $GITHUB_OUTPUT
+          
+          echo "Deployment triggered: $deploy_url"
+        env:
+          CI: false
