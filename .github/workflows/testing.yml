@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [ main,Errors, Development, release/v1.0.0  ]
+    branches: [main, Errors, Development, release/v1.0.0,ColdFix]
   pull_request:
-    branches: [ main,Errors, Development, release/v1.0.0  ]
+    branches: [main, Errors, Development, release/v1.0.0, ColdFix]
 
 jobs:
   unit-tests:
@@ -18,32 +18,49 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: npm
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests & generate JUnit report
+      - name: Run unit tests & generate reports
         run: |
           npm test \
             -- --watchAll=false \
-                 --coverage \
-                 --passWithNoTests \
-                 --reporters=default \
-                 --reporters=jest-junit
+               --coverage \
+               --passWithNoTests \
+               --reporters=default \
+               --reporters=jest-junit \
+               --outputFile=junit.xml
         env:
           CI: true
 
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-coverage
-          path: coverage/
+      - name: Verify test artifacts exist
+        run: |
+          mkdir -p test-artifacts
+          [ -f junit.xml ] && cp junit.xml test-artifacts/ || echo "No JUnit report found" > test-artifacts/junit-missing.txt
+          [ -d coverage ] && cp -r coverage/ test-artifacts/ || echo "No coverage report found" > test-artifacts/coverage-missing.txt
 
-      - name: Upload JUnit XML results
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v3
+        with:
+          name: test-artifacts
+          path: test-artifacts/
+          retention-days: 7
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: test-results
           path: junit.xml
+          retention-days: 7
