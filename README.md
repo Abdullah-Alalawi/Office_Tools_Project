@@ -51,7 +51,8 @@ We follow a **Gitflow-based** workflow:
 - `cold-fix`: A maintenance branch for correcting issues found in `development` before they impact the main integration workflow.
 
 ---
-![Flowcharts - Page 4](https://github.com/user-attachments/assets/2bde7d64-c11e-4da6-9bb3-0189638ae734)
+![Flowcharts - Page 4 (1)](https://github.com/user-attachments/assets/b2b3e3c8-dc7a-465e-ac3c-7d09ba88fe6c)
+
 
 
 ## Getting Started 
