@@ -96,4 +96,4 @@ jobs:
         if: always()
         with:
           name: eslint-security-report
-          path: ./eslint-reports/eslint-report.json
+          path: ./Pages/test-reports
