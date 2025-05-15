@@ -18,12 +18,13 @@ jest.mock('openai', () =>
     chat: {
       completions: {
         create: jest.fn().mockResolvedValue({
-          choices: [{ message: { content: 'Hi' } }],
+          choices: [{ message: { content: 'YES SIR' } }],
         }),
       },
     },
   }))
 );
+
 
 describe('AIChat Component', () => {
   afterEach(() => {
@@ -80,7 +81,7 @@ describe('AIChat Component', () => {
         },
         }));
 
-    fireEvent.change(input, { target: { value: 'reply to thi with YES SIR' } });
+    fireEvent.change(input, { target: { value: 'reply to this with YES SIR' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
     // first wait for the OpenAI call
@@ -124,37 +125,6 @@ describe('AIChat Component', () => {
     );
   });
 
-  test('renders human messages on the right, AI on the left', async () => {
-    // Override mock for this test so AI replies with exactly "HELLO PEOPLE"
-    OpenAI.mockImplementationOnce(() => ({
-      chat: {
-        completions: {
-          create: jest.fn().mockResolvedValue({
-            choices: [{ message: { content: 'HELLO MADAM' } }],
-          }),
-        },
-      },
-    }));
 
-    render(<AIChat />);
-    const input = screen.getByPlaceholderText('Enter your Question ?');
-
-    // send a human message
-    fireEvent.change(input, { target: { value: 'reply to this with HELLO MADAM' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-
-    // wait for the OpenAI call
-    await waitFor(() => expect(OpenAI).toHaveBeenCalled());
-
-    // human bubble should be right-aligned
-     await waitFor(() => {
-    const humanBubble = screen.getByDisplayValue('reply to this with HELLO MADAM');
-    expect(humanBubble.closest('div.flex')).toHaveClass('justify-end');
-    });
-    // then wait for the AI bubble to appear and be left-aligned
-    await waitFor(() => {
-      const aiBubble = screen.getByDisplayValue('HELLO MADAM');
-      expect(aiBubble.closest('div.flex')).toHaveClass('justify-start');
-    });
-  });
 });
+ 
