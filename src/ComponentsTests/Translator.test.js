@@ -89,4 +89,4 @@ describe('Translator API Response', () => {
       expect(screen.getByLabelText('TO')).toHaveValue('');
     });
   });
-});
+}); 
