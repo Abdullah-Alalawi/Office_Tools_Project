@@ -2,9 +2,9 @@ name: Lint
 
 on:
   push:
-    branches: [ main,Errors, Development, release/v1.0.0  ]
+    branches: [main, Errors, Development, release/v1.0.0]
   pull_request:
-    branches: [ main,Errors, Development, release/v1.0.0  ]
+    branches: [main, Errors, Development, release/v1.0.0]
 
 jobs:
   eslint:
