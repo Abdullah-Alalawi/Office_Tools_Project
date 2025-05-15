@@ -68,17 +68,32 @@ jobs:
           }
           EOF
 
+      - name: Create reports directory
+        run: mkdir -p ./eslint-reports
+
       - name: Run ESLint with security checks
         run: |
-          npx eslint src/ \
-            --rule 'security/detect-object-injection: ["error", { "exceptionPatterns": ["^GrammarCorrection\\."] }]' \
-            --rule 'security/detect-non-literal-require: error' \
-            --rule 'security/detect-possible-timing-attacks: error' \
-            -f json -o eslint-report.json || true
+          if [ -d "src" ]; then
+            npx eslint src/ \
+              --rule 'security/detect-object-injection: ["error", { "exceptionPatterns": ["^GrammarCorrection\\."] }]' \
+              --rule 'security/detect-non-literal-require: error' \
+              --rule 'security/detect-possible-timing-attacks: error' \
+              -f json -o ./eslint-reports/eslint-report.json || true
+          else
+            echo '[]' > ./eslint-reports/eslint-report.json
+            echo "Warning: src directory not found - created empty report"
+          fi
+
+      - name: List generated files (debug)
+        run: |
+          echo "Generated files:"
+          ls -la ./eslint-reports/
+          echo "Report content:"
+          cat ./eslint-reports/eslint-report.json || echo "No report file found"
 
       - name: Upload ESLint report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: eslint-security-report
-          path: eslint-report.json
+          path: ./eslint-reports/eslint-report.json
