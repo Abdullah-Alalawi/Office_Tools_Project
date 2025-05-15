@@ -81,7 +81,7 @@ jobs:
       # Upload ESLint report as artifact
       - name: Upload ESLint report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: eslint-report
           path: eslint-report.json
