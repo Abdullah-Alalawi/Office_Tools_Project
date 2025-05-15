@@ -8,11 +8,17 @@ on:
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
+env:
+  REPORTS_DIR: ${{ github.workspace }}/security-reports
+
 jobs:
   dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create reports directory
+        run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
 
       - name: OWASP Dependency Scan
         uses: dependency-check/Dependency-Check_Action@main
@@ -22,43 +28,28 @@ jobs:
           failOnCVSS: 7
           skip: '**/__tests__/**,**/cypress/**,**/node_modules/**'
           scanPath: 'src/'
-          outputDirectory: './reports'
-
-      - name: Upload OWASP scan reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: owasp-dependency-reports
-          path: reports/
+          outputDirectory: '${{ env.REPORTS_DIR }}/dependency-check'
 
       - name: Generate npm audit report
         run: |
           npm install
-          npm audit --json > npm-audit-report.json || echo '{"error": "npm audit failed"}' > npm-audit-report.json
-
-      - name: Upload npm audit report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-audit-report
-          path: npm-audit-report.json
+          npm audit --json > $REPORTS_DIR/npm-audit-report.json || echo '{"error": "npm audit failed"}' > $REPORTS_DIR/npm-audit-report.json
 
       - name: Check React DevContainer Features
         run: |
-          mkdir -p reports
           if [ -f .devcontainer/devcontainer.json ]; then
             jq -r '.features | to_entries[] | "\(.key): \(.value.version)"' .devcontainer/devcontainer.json \
-              > reports/devcontainer-features.txt || echo "No features found" > reports/devcontainer-features.txt
+              > $REPORTS_DIR/devcontainer-features.txt || echo "No features found" > $REPORTS_DIR/devcontainer-features.txt
           else
-            echo "No devcontainer.json found" > reports/devcontainer-features.txt
+            echo "No devcontainer.json found" > $REPORTS_DIR/devcontainer-features.txt
           fi
 
-      - name: Upload DevContainer features list
-        if: always()
+      - name: Upload all dependency reports
         uses: actions/upload-artifact@v4
         with:
-          name: devcontainer-features
-          path: reports/devcontainer-features.txt
+          name: dependency-reports
+          path: ${{ env.REPORTS_DIR }}/
+        if: always()
 
   secrets:
     runs-on: ubuntu-latest
@@ -67,40 +58,37 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create reports directory
+        run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
+
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
-          extra-args: '--no-git --report-format json --report-path reports/gitleaks-report.json'
-
-      - name: Upload Gitleaks report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitleaks-report
-          path: reports/gitleaks-report.json
+          extra-args: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
 
       - name: Check Env Variables
         run: |
-          mkdir -p reports
-          grep -r 'REACT_APP_' src/ > reports/react-env-vars.txt  || echo "No React env variables found" > reports/react-env-vars.txt
-          grep -r 'process.env' src/ >> reports/react-env-vars.txt || true
+          grep -r 'REACT_APP_' src/ > $REPORTS_DIR/react-env-vars.txt  || echo "No React env variables found" > $REPORTS_DIR/react-env-vars.txt
+          grep -r 'process.env' src/ >> $REPORTS_DIR/react-env-vars.txt || true
 
-      - name: Upload env-var check
-        if: always()
+      - name: Upload secret scan reports
         uses: actions/upload-artifact@v4
         with:
-          name: env-var-check
-          path: reports/react-env-vars.txt
+          name: secret-scan-reports
+          path: ${{ env.REPORTS_DIR }}/
+        if: always()
 
   codespaces:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create reports directory
+        run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
+
       - name: Validate DevContainer Config
         run: |
-          mkdir -p reports
           {
             echo "=== DevContainer Security Checks ==="
             if [ -f .devcontainer/devcontainer.json ]; then
@@ -111,7 +99,7 @@ jobs:
             else
               echo "No devcontainer.json found"
             fi
-          } > reports/codespaces-check.log
+          } > $REPORTS_DIR/codespaces-check.log
 
       - name: Verify React Ports
         run: |
@@ -122,11 +110,11 @@ jobs:
             else
               echo "No devcontainer.json found"
             fi
-          } >> reports/codespaces-check.log
+          } >> $REPORTS_DIR/codespaces-check.log
 
-      - name: Upload Codespaces hardening log
-        if: always()
+      - name: Upload Codespaces reports
         uses: actions/upload-artifact@v4
         with:
-          name: codespaces-check-log
-          path: reports/codespaces-check.log
+          name: codespaces-reports
+          path: ${{ env.REPORTS_DIR }}/
+        if: always()
