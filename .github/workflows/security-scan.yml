@@ -21,13 +21,14 @@ jobs:
         run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
 
       - name: OWASP Dependency Scan
-        uses: dependency-check/Dependency-Check_Action@v3
+        uses: dependency-check/Dependency-Check_Action@main
         with:
           project: 'Office_Tools_Kit'
-          path: 'src/'
           format: 'ALL'
-          out: '${{ env.REPORTS_DIR }}/dependency-check'
-          args: '--scan "src/" --disableYarnAudit --disableNodeAudit --skip "**/__tests__/**" --skip "**/cypress/**" --skip "**/node_modules/**" --failOnCVSS 7'
+          failOnCVSS: 7
+          skip: '**/__tests__/**,**/cypress/**,**/node_modules/**'
+          scanPath: 'src/'
+          outputDirectory: '${{ env.REPORTS_DIR }}/dependency-check'
 
       - name: Generate npm audit report
         run: |
@@ -60,20 +61,11 @@ jobs:
       - name: Create reports directory
         run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
 
-      - name: Setup Gitleaks
-        run: |
-          wget https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -O gitleaks
-          chmod +x gitleaks
-          sudo mv gitleaks /usr/local/bin/
-
-      - name: Run Gitleaks Scan
-        run: |
-          gitleaks detect \
-            --config=.gitleaks.toml \
-            --source=. \
-            --no-git \
-            --report-format json \
-            --report-path $REPORTS_DIR/gitleaks-report.json || true
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+          extra-args: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
 
       - name: Check Env Variables
         run: |
@@ -124,5 +116,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: codespaces-reports
-          path: $REPORTS_DIR/
+          path: ${{ env.REPORTS_DIR }}/
         if: always()
