@@ -6,8 +6,8 @@
 
 ###  Dual AI Chatbots
 
-1. **General Assistant** – For everyday questions and tasks
-2. **Technical Specialist** – For coding and technical queries
+1. **GPT Assistant** – For everyday questions and tasks
+2. **DeepSeek Assistant** – For general and technical queries
 
 ### Grammar & Spell Checker
 
@@ -20,7 +20,7 @@
 
 - Multi-language support
 - Preserves formatting
-- Fast batch processing
+- real-time batch processing
 - Context-aware translations
 
 ---
