@@ -21,14 +21,13 @@ jobs:
         run: mkdir -p $REPORTS_DIR && chmod -R 777 $REPORTS_DIR
 
       - name: OWASP Dependency Scan
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@v3.1.0
         with:
           project: 'Office_Tools_Kit'
+          path: 'src/'
           format: 'ALL'
-          failOnCVSS: 7
-          skip: '**/__tests__/**,**/cypress/**,**/node_modules/**'
-          scanPath: 'src/'
-          outputDirectory: '${{ env.REPORTS_DIR }}/dependency-check'
+          out: '${{ env.REPORTS_DIR }}/dependency-check'
+          args: '--scan "src/" --disableYarnAudit --disableNodeAudit --skip "**/__tests__/**" --skip "**/cypress/**" --skip "**/node_modules/**" --failOnCVSS 7'
 
       - name: Generate npm audit report
         run: |
@@ -65,7 +64,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         with:
           config-path: .gitleaks.toml
-          extra-args: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
+          args: '--no-git --report-format json --report-path ${{ env.REPORTS_DIR }}/gitleaks-report.json'
 
       - name: Check Env Variables
         run: |
