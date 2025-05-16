@@ -142,7 +142,6 @@ const Languages = [
     const translateText = async (Text_To_Translate,LangFrom="" ,LangTo="") => {
       setText(Text_To_Translate)
       if (!Text_To_Translate || Text_To_Translate.trim() === "" ) {
-        console.error("Error: The text input is empty!");
         return;
       }     
       try {
@@ -153,10 +152,7 @@ const Languages = [
         }
         const response = await translate.translateText(params).promise();
         setTranslatedText(response.TranslatedText);
-      } catch (error) {
-        console.error("Translation error: ", error);
-        console.error("Error details:", error.message, error.stack);
-        
+      } catch (error) { 
       }
     };
         
