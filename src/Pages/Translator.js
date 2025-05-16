@@ -20,8 +20,8 @@ const Translator = () => {
 
       // IAM Role with fullAccess to the aws translation service 
       AWS.config.update({
-        accessKeyId: process.env.REACT_APP_AWS_KEY_ID,
-        secretAccessKey: process.env.REACT_APP_AWS_ACCESS_KEY,
+        accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
         region: process.env.REACT_APP_AWS_REGION,
       });
       
@@ -142,6 +142,7 @@ const Languages = [
     const translateText = async (Text_To_Translate,LangFrom="" ,LangTo="") => {
       setText(Text_To_Translate)
       if (!Text_To_Translate || Text_To_Translate.trim() === "" ) {
+        console.log("Error: The text input is empty!");
         return;
       }     
       try {
@@ -152,7 +153,10 @@ const Languages = [
         }
         const response = await translate.translateText(params).promise();
         setTranslatedText(response.TranslatedText);
-      } catch (error) { 
+      } catch (error) {
+        console.log("Translation error: ", error);
+        console.log("Error details:", error.message, error.stack);
+        
       }
     };
         
