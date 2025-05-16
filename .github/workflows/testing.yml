@@ -50,11 +50,11 @@ jobs:
             echo '{}' > coverage/coverage-final.json
           fi
 
-      - name: Upload test results
+      - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: junit-results
           path: test-results/junit.xml
 
       - name: Upload coverage report
@@ -68,12 +68,12 @@ jobs:
         run: |
           echo "=== Test Summary ==="
           if [ -f "test-results/junit.xml" ]; then
-            echo "JUnit report exists"
+            echo "✅ JUnit report found at test-results/junit.xml"
           else
-            echo "No JUnit report generated"
+            echo "❌ No JUnit report generated"
           fi
           if [ -d "coverage" ]; then
-            echo "Coverage report exists"
+            echo "✅ Coverage directory exists"
           else
-            echo "No coverage report generated"
+            echo "❌ No coverage report generated"
           fi
