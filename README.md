@@ -28,7 +28,7 @@
 ##  Tech Stack
 
 - **Frontend:** ReactJS, Tailwind CSS
-- **Backend:** Node.js 
+- **Backend:** ReactJS 
 - **APIs:** AWS Translate , OpenAI , DeepSeek, Language Tools
 - **DevOps:** GitHub Actions
 - **Linting** :   ESLint
