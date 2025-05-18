@@ -28,12 +28,12 @@
 ##  Tech Stack
 
 - **Frontend:** ReactJS, Tailwind CSS
-- **Backend:** Node.js 
+- **Backend:** ReactJS
 - **APIs:** AWS Translate , OpenAI , DeepSeek, Language Tools
 - **DevOps:** GitHub Actions
 - **Linting** :   ESLint
 - **Unit Testing** : Jest  
-- **Security Scans**:    OWASP , GitLeaks 
+- **Security Scans**:    OWASP , GitLeaks, JSON Processor 
 - **Dev Environment** :   GitHub Code Spaces
 - **Cloud  SP**:  Render Cloud
 
