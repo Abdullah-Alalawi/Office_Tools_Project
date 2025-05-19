@@ -2,9 +2,9 @@ name: Security Scans
 
 on:
   push:
-    branches: [main, Errors, Development, release/v1.0.0]
+    branches: [main, Errors,ColdFix,Features, Development, release/v1.0.0]
   pull_request:
-    branches: [main, Errors, Development, release/v1.0.0]
+    branches: [main, Errors,ColdFix,Features, Development, release/v1.0.0]
   schedule:
     - cron: '0 0 * * 1'  # Weekly scans
 
